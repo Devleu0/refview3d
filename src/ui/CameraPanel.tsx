@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import { useViewerStore } from '../store/viewerStore'
-import type { ViewPreset } from '../viewer/SceneManager'
+import { recordCameraChange, withCameraHistory } from '../viewer/cameraHistory'
+import type { CameraState, ViewPreset } from '../viewer/SceneManager'
 import { Panel } from './Panel'
 
 const FOV_PRESETS = [
@@ -26,6 +28,16 @@ export function CameraPanel() {
   const setKeepFraming = useViewerStore((s) => s.setKeepFraming)
   const setGridVisible = useViewerStore((s) => s.setGridVisible)
 
+  // 슬라이더를 끄는 동안은 실시간으로 적용하고, 손을 뗄 때 한 번만 기록한다.
+  const dragStart = useRef<CameraState | null>(null)
+  const beginFovEdit = () => {
+    if (viewer && !dragStart.current) dragStart.current = viewer.getCameraState()
+  }
+  const endFovEdit = () => {
+    if (viewer && dragStart.current) recordCameraChange('화각 변경', dragStart.current, viewer.getCameraState())
+    dragStart.current = null
+  }
+
   return (
     <Panel title="카메라">
       <label className="field">
@@ -38,13 +50,25 @@ export function CameraPanel() {
           max={120}
           step={1}
           value={fov}
-          onChange={(e) => setFov(Number(e.target.value))}
+          onPointerDown={beginFovEdit}
+          onKeyDown={beginFovEdit}
+          onChange={(e) => {
+            beginFovEdit()
+            setFov(Number(e.target.value))
+          }}
+          onPointerUp={endFovEdit}
+          onKeyUp={endFovEdit}
+          onBlur={endFovEdit}
         />
       </label>
 
       <div className="button-row">
         {FOV_PRESETS.map((p) => (
-          <button key={p.fov} onClick={() => setFov(p.fov)} aria-pressed={Math.round(fov) === p.fov}>
+          <button
+            key={p.fov}
+            onClick={() => withCameraHistory(`화각 ${p.label}`, () => setFov(p.fov))}
+            aria-pressed={Math.round(fov) === p.fov}
+          >
             {p.label} {p.fov}°
           </button>
         ))}
@@ -61,12 +85,16 @@ export function CameraPanel() {
 
       <div className="button-grid">
         {VIEW_PRESETS.map((v) => (
-          <button key={v.preset} onClick={() => viewer?.setViewPreset(v.preset)} disabled={!viewer}>
+          <button
+            key={v.preset}
+            onClick={() => withCameraHistory(`${v.label} 시점`, (vw) => vw.setViewPreset(v.preset))}
+            disabled={!viewer}
+          >
             {v.label}
           </button>
         ))}
       </div>
-      <button className="wide" onClick={() => viewer?.frame()} disabled={!viewer}>
+      <button className="wide" onClick={() => withCameraHistory('화면 맞추기', (vw) => vw.frame())} disabled={!viewer}>
         화면에 맞추기 (F)
       </button>
     </Panel>

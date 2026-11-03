@@ -20,6 +20,16 @@
   margin-right: 12px;
 }
 
+.toolbar-group {
+  display: flex;
+  gap: 2px;
+}
+
+.toolbar-group button {
+  min-width: 30px;
+  padding: 4px 6px;
+}
+
 .workspace {
   flex: 1;
   display: flex;

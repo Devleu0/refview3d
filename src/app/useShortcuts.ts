@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { useViewerStore } from '../store/viewerStore'
+import { useHistoryStore } from '../store/historyStore'
+import { withCameraHistory } from '../viewer/cameraHistory'
 import { openModelDialog } from './openModelDialog'
 
 /** 입력 필드에 포커스가 있을 때는 단축키를 가로채지 않는다. */
@@ -13,18 +14,27 @@ export function isTypingTarget(target: EventTarget | null) {
 export function useShortcuts() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return
+      if (isTypingTarget(e.target) || e.altKey) return
       const ctrl = e.ctrlKey || e.metaKey
       const key = e.key.toLowerCase()
 
-      if (ctrl && !e.shiftKey && !e.altKey && key === 'o') {
-        e.preventDefault()
-        void openModelDialog()
+      if (ctrl) {
+        if (key === 'o' && !e.shiftKey) {
+          e.preventDefault()
+          void openModelDialog()
+        } else if (key === 'z' && !e.shiftKey) {
+          e.preventDefault()
+          useHistoryStore.getState().undo()
+        } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+          e.preventDefault()
+          useHistoryStore.getState().redo()
+        }
         return
       }
-      if (!ctrl && !e.altKey && key === 'f') {
+
+      if (key === 'f') {
         e.preventDefault()
-        useViewerStore.getState().viewer?.frame()
+        withCameraHistory('화면 맞추기', (viewer) => viewer.frame())
       }
     }
     window.addEventListener('keydown', onKeyDown)

@@ -1,5 +1,6 @@
 import { useModelStore } from '../store/modelStore'
 import { CameraPanel } from '../ui/CameraPanel'
+import { HistoryButtons } from '../ui/HistoryButtons'
 import { ModelPanel } from '../ui/ModelPanel'
 import { OpenModelButton } from '../ui/OpenModelButton'
 import { Viewport } from '../viewer/Viewport'
@@ -20,6 +21,7 @@ export default function App() {
       <header className="toolbar">
         <span className="brand">RefView3D</span>
         <OpenModelButton />
+        <HistoryButtons />
       </header>
       <main className="workspace">
         <section className="viewport-slot">

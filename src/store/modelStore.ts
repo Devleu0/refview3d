@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { LoadedModel } from '../loaders/loadModel'
 import { openModelFromFile, openModelFromPath } from '../loaders/openModel'
+import { useHistoryStore } from './historyStore'
 import { useViewerStore } from './viewerStore'
 
 type ModelInfo = Omit<LoadedModel, 'object'>
@@ -27,6 +28,8 @@ export const useModelStore = create<ModelState>((set) => {
       // 로딩 중에 다른 파일을 열었다면 이 결과는 버린다.
       if (token !== loadToken) return
       useViewerStore.getState().viewer?.setModel(loaded.object)
+      // 이전 모델 기준의 기록은 새 모델에 의미가 없으므로 비운다.
+      useHistoryStore.getState().clear()
       const { object: _object, ...info } = loaded
       set({ model: info, loading: null })
     } catch (err) {
@@ -45,6 +48,7 @@ export const useModelStore = create<ModelState>((set) => {
     close: () => {
       loadToken++
       useViewerStore.getState().viewer?.setModel(null)
+      useHistoryStore.getState().clear()
       set({ model: null, loading: null })
     },
     clearError: () => set({ error: null }),

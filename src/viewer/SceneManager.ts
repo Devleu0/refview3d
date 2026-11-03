@@ -36,6 +36,8 @@ export class SceneManager {
   private modelRoot: THREE.Object3D | null = null
   /** 현재 모델의 바운딩 구 반지름 (모델이 없으면 0) */
   private modelRadius = 0
+  /** 코드로 카메라를 옮길 때마다 1씩 증가 (마우스 조작과 구분용) */
+  cameraEpoch = 0
   private frameRequested = false
   private disposed = false
 
@@ -110,6 +112,7 @@ export class SceneManager {
    */
   setFov(fov: number, keepFraming = true) {
     const prev = this.camera.fov
+    this.markProgrammaticChange()
     if (keepFraming && prev !== fov) {
       const target = this.controls.target
       const offset = this.camera.position.clone().sub(target)
@@ -143,6 +146,7 @@ export class SceneManager {
     const halfFovH = Math.atan(Math.tan(halfFov) * this.camera.aspect)
     const distance = (sphere.radius / Math.sin(Math.min(halfFov, halfFovH))) * 1.1
 
+    this.markProgrammaticChange()
     this.controls.target.copy(sphere.center)
     this.camera.position.copy(sphere.center).addScaledVector(dir, distance)
     this.updateClipping(distance, sphere.radius)
@@ -153,6 +157,23 @@ export class SceneManager {
 
   setViewPreset(preset: ViewPreset) {
     this.frame(PRESET_DIRECTIONS[preset])
+  }
+
+  /**
+   * 코드로 카메라를 옮길 때 호출한다.
+   * 마우스 조작의 감속(관성)을 멈추고, 히스토리 추적기가 진행 중인 제스처를 확정하도록 epoch를 올린다.
+   */
+  private markProgrammaticChange() {
+    this.cameraEpoch++
+    // OrbitControls는 감속 상태를 공개 API로 초기화할 수 없어 내부 필드를 직접 비운다. (three r187 기준)
+    const internal = this.controls as unknown as {
+      _sphericalDelta?: THREE.Spherical
+      _panOffset?: THREE.Vector3
+      _scale?: number
+    }
+    internal._sphericalDelta?.set(0, 0, 0)
+    internal._panOffset?.set(0, 0, 0)
+    if (internal._scale !== undefined) internal._scale = 1
   }
 
   private updateClipping(distance: number, radius = distance) {
@@ -204,6 +225,7 @@ export class SceneManager {
   }
 
   setCameraState(state: CameraState) {
+    this.markProgrammaticChange()
     this.camera.position.fromArray(state.position)
     this.controls.target.fromArray(state.target)
     this.camera.fov = state.fov
