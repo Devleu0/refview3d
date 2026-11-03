@@ -1,4 +1,4 @@
-import { useHistoryStore, type Command } from '../store/historyStore'
+import { createMergingRecorder, useHistoryStore, type Command } from '../store/historyStore'
 import { useViewerStore } from '../store/viewerStore'
 import type { CameraState, SceneManager } from './SceneManager'
 
@@ -19,32 +19,9 @@ export function recordCameraChange(label: string, before: CameraState, after: Ca
   useHistoryStore.getState().push(cameraCommand(label, before, after))
 }
 
-/**
- * 짧은 간격으로 이어지는 변경(슬라이더를 화살표 키로 여러 번 누르는 경우 등)을 한 항목으로 합쳐 기록한다.
- * 그 사이 다른 작업이 기록되었으면 새 항목을 만든다.
- */
-export function createMergingRecorder(label: string, mergeWindowMs = 800) {
-  let last: { command: Command; after: CameraState; at: number } | null = null
-  const apply = (state: CameraState) => useViewerStore.getState().applyCameraState(state)
-
-  return (before: CameraState, after: CameraState) => {
-    const now = performance.now()
-    const top = useHistoryStore.getState().past.at(-1)
-    if (last && top === last.command && now - last.at < mergeWindowMs) {
-      last.after = after
-      last.at = now
-      return
-    }
-    if (sameState(before, after)) return
-    const entry: { command: Command; after: CameraState; at: number } = {
-      after,
-      at: now,
-      // after는 합쳐지면서 바뀌므로 실행 시점에 읽는다.
-      command: { label, undo: () => apply(before), redo: () => apply(entry.after) },
-    }
-    last = entry
-    useHistoryStore.getState().push(entry.command)
-  }
+/** 연달아 바꾼 카메라 변경(슬라이더 화살표 키 등)을 한 항목으로 합치는 기록기 */
+export function createCameraRecorder(label: string) {
+  return createMergingRecorder(label, (state: CameraState) => useViewerStore.getState().applyCameraState(state), sameState)
 }
 
 /** fn이 바꾼 카메라 상태를 한 번의 히스토리 항목으로 기록한다. */

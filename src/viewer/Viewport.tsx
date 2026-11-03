@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useLightStore } from '../store/lightStore'
 import { useViewerStore } from '../store/viewerStore'
 import { trackOrbitHistory } from './cameraHistory'
 import { SceneManager } from './SceneManager'
@@ -13,8 +14,13 @@ export function Viewport() {
     if (!container) return
     const viewer = new SceneManager(container)
     const stopTracking = trackOrbitHistory(viewer)
+    viewer.setLighting(useLightStore.getState().settings)
+    const stopLighting = useLightStore.subscribe((s, prev) => {
+      if (s.settings !== prev.settings) viewer.setLighting(s.settings)
+    })
     setViewer(viewer)
     return () => {
+      stopLighting()
       stopTracking()
       setViewer(null)
       viewer.dispose()

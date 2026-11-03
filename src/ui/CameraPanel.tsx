@@ -1,8 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useViewerStore } from '../store/viewerStore'
-import { createMergingRecorder, withCameraHistory } from '../viewer/cameraHistory'
-import type { CameraState, ViewPreset } from '../viewer/SceneManager'
+import { createCameraRecorder, withCameraHistory } from '../viewer/cameraHistory'
+import type { ViewPreset } from '../viewer/SceneManager'
 import { Panel } from './Panel'
+import { SliderField } from './SliderField'
+import { useGestureHistory } from './useGestureHistory'
 
 const FOV_PRESETS = [
   { label: '망원', fov: 20 },
@@ -10,10 +12,7 @@ const FOV_PRESETS = [
   { label: '광각', fov: 90 },
 ] as const
 
-/** 슬라이더 값을 바꾸는 키 */
-const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'])
-
-const VIEW_PRESETS:{ label: string; preset: ViewPreset }[] = [
+const VIEW_PRESETS: { label: string; preset: ViewPreset }[] = [
   { label: '정면', preset: 'front' },
   { label: '후면', preset: 'back' },
   { label: '좌측', preset: 'left' },
@@ -31,44 +30,21 @@ export function CameraPanel() {
   const setKeepFraming = useViewerStore((s) => s.setKeepFraming)
   const setGridVisible = useViewerStore((s) => s.setGridVisible)
 
-  // 슬라이더를 끄는 동안은 실시간으로 적용하고, 손을 뗄 때 한 번만 기록한다.
   // 화살표 키를 연달아 누른 것도 하나로 합친다.
-  const recordFov = useMemo(() => createMergingRecorder('화각 변경'), [])
-  const dragStart = useRef<CameraState | null>(null)
-  const beginFovEdit = () => {
-    if (viewer && !dragStart.current) dragStart.current = viewer.getCameraState()
-  }
-  const endFovEdit = () => {
-    if (viewer && dragStart.current) recordFov(dragStart.current, viewer.getCameraState())
-    dragStart.current = null
-  }
+  const recordFov = useMemo(() => createCameraRecorder('화각 변경'), [])
+  const fovGesture = useGestureHistory(() => viewer?.getCameraState() ?? null, recordFov)
 
   return (
     <Panel title="카메라">
-      <label className="field">
-        <span className="field-label">
-          화각(FOV) <output>{Math.round(fov)}°</output>
-        </span>
-        <input
-          type="range"
-          min={10}
-          max={120}
-          step={1}
-          value={fov}
-          onPointerDown={beginFovEdit}
-          onKeyDown={(e) => {
-            // Ctrl+Z 같은 단축키에서 시작하면 Undo 직전 상태를 잡아 엉뚱한 항목이 기록된다.
-            if (SLIDER_KEYS.has(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) beginFovEdit()
-          }}
-          onChange={(e) => {
-            beginFovEdit()
-            setFov(Number(e.target.value))
-          }}
-          onPointerUp={endFovEdit}
-          onKeyUp={endFovEdit}
-          onBlur={endFovEdit}
-        />
-      </label>
+      <SliderField
+        label="화각(FOV)"
+        value={fov}
+        min={10}
+        max={120}
+        format={(v) => `${Math.round(v)}°`}
+        onChange={setFov}
+        {...fovGesture}
+      />
 
       <div className="button-row">
         {FOV_PRESETS.map((p) => (

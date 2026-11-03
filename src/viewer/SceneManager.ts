@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import type { LightSettings } from '../store/lightStore'
+import { LightRig } from './LightRig'
+import { ShadingOverride } from './ShadingOverride'
 
 export type ViewPreset = 'front' | 'back' | 'left' | 'right' | 'top' | 'threeQuarter'
 
@@ -33,6 +36,8 @@ export class SceneManager {
   private readonly container: HTMLElement
   private readonly resizeObserver: ResizeObserver
   private readonly grid: THREE.GridHelper
+  private readonly lights = new LightRig()
+  private readonly shading = new ShadingOverride()
   private modelRoot: THREE.Object3D | null = null
   /** 현재 모델의 바운딩 구 반지름 (모델이 없으면 0) */
   private modelRadius = 0
@@ -66,11 +71,10 @@ export class SceneManager {
     this.grid = new THREE.GridHelper(10, 20, 0x6b6c73, 0x4a4b51)
     this.scene.add(this.grid)
 
-    // 임시 조명. 조명 기능 단계에서 LightRig로 교체한다.
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x444450, 1.2))
-    const key = new THREE.DirectionalLight(0xffffff, 1.8)
-    key.position.set(3, 5, 4)
-    this.scene.add(key)
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFShadowMap
+    this.lights.fit(new THREE.Vector3(), 5, 0)
+    this.scene.add(this.lights.group)
 
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(container)
@@ -186,6 +190,8 @@ export class SceneManager {
 
   /** 모델을 교체한다. 이전 모델의 GPU 리소스는 해제한다. */
   setModel(object: THREE.Object3D | null) {
+    // 바꿔 끼운 재질을 먼저 원본으로 되돌려야 원본 재질까지 해제된다.
+    this.shading.attach(null)
     if (this.modelRoot) {
       this.scene.remove(this.modelRoot)
       disposeObject(this.modelRoot)
@@ -193,25 +199,38 @@ export class SceneManager {
     this.modelRoot = object
     this.modelRadius = 0
     this.controls.maxDistance = Infinity
-    if (object) {
+    const box = object ? new THREE.Box3().setFromObject(object) : null
+    if (object && box && !box.isEmpty()) {
       this.scene.add(object)
-      const box = new THREE.Box3().setFromObject(object)
-      if (!box.isEmpty()) this.modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius
+      this.shading.attach(object)
+      this.modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius
       // 휠로 끝없이 멀어져 모델을 잃어버리지 않게 한다. 망원 10°로 맞춘 거리(약 13배)보다 넉넉하게 둔다.
-      if (this.modelRadius > 0) this.controls.maxDistance = this.modelRadius * 100
-      this.placeGrid(object)
+      this.controls.maxDistance = this.modelRadius * 100
+      this.placeFloor(box)
       this.frame(PRESET_DIRECTIONS.threeQuarter)
     } else {
+      if (object) {
+        this.scene.add(object)
+        this.shading.attach(object)
+      }
       this.grid.position.set(0, 0, 0)
       this.grid.scale.setScalar(1)
+      this.lights.fit(new THREE.Vector3(), 5, 0)
       this.requestRender()
     }
   }
 
-  /** 모델 크기에 맞춰 그리드를 발 밑으로 옮기고 배율을 조정한다. */
-  private placeGrid(object: THREE.Object3D) {
-    const box = new THREE.Box3().setFromObject(object)
-    if (box.isEmpty()) return
+  /** 조명 배치와 음영 방식을 적용한다. */
+  setLighting(settings: LightSettings) {
+    this.lights.apply(settings)
+    this.shading.set(settings.shading, settings.toonSteps)
+    this.requestRender()
+  }
+
+  /** 모델 크기에 맞춰 그리드와 그림자 바닥을 발 밑으로 옮기고, 조명 거리를 맞춘다. */
+  private placeFloor(box: THREE.Box3) {
+    const sphere = box.getBoundingSphere(new THREE.Sphere())
+    this.lights.fit(sphere.center, sphere.radius, box.min.y)
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
     const extent = Math.max(size.x, size.z, size.y * 0.5)
@@ -244,7 +263,9 @@ export class SceneManager {
     this.resizeObserver.disconnect()
     this.controls.removeEventListener('change', this.requestRender)
     this.controls.dispose()
+    this.shading.dispose()
     if (this.modelRoot) disposeObject(this.modelRoot)
+    this.lights.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }

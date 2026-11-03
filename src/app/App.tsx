@@ -1,6 +1,7 @@
 import { useModelStore } from '../store/modelStore'
 import { CameraPanel } from '../ui/CameraPanel'
 import { HistoryButtons } from '../ui/HistoryButtons'
+import { LightPanel } from '../ui/LightPanel'
 import { ModelPanel } from '../ui/ModelPanel'
 import { OpenModelButton } from '../ui/OpenModelButton'
 import { Viewport } from '../viewer/Viewport'
@@ -43,6 +44,7 @@ export default function App() {
         <aside className="side-panel">
           <ModelPanel />
           <CameraPanel />
+          <LightPanel />
         </aside>
       </main>
     </div>
