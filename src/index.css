@@ -1,0 +1,51 @@
+:root {
+  --bg: #1b1c1f;
+  --panel: #232428;
+  --panel-raised: #2c2d32;
+  --border: #36373d;
+  --text: #e4e4e7;
+  --text-dim: #8b8c93;
+  --accent: #5b9dff;
+  --viewport-bg: #3a3b40;
+
+  color-scheme: dark;
+  font-family: 'Pretendard', 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+input[type='range'] {
+  accent-color: var(--accent);
+}
