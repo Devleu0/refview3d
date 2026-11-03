@@ -1,6 +1,11 @@
+import { CameraPanel } from '../ui/CameraPanel'
+import { Viewport } from '../viewer/Viewport'
+import { useShortcuts } from './useShortcuts'
 import './App.css'
 
 export default function App() {
+  useShortcuts()
+
   return (
     <div className="app">
       <header className="toolbar">
@@ -8,9 +13,11 @@ export default function App() {
       </header>
       <main className="workspace">
         <section className="viewport-slot">
-          <p className="empty-hint">뷰포트 준비 중</p>
+          <Viewport />
         </section>
-        <aside className="side-panel" />
+        <aside className="side-panel">
+          <CameraPanel />
+        </aside>
       </main>
     </div>
   )

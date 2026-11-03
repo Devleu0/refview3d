@@ -33,6 +33,18 @@
   background: var(--viewport-bg);
 }
 
+.viewport {
+  position: absolute;
+  inset: 0;
+}
+
+.viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
 .empty-hint {
   position: absolute;
   inset: 0;
