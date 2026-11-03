@@ -55,6 +55,70 @@
   pointer-events: none;
 }
 
+.overlay-badge {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  pointer-events: none;
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 8px;
+  background: rgb(91 157 255 / 0.08);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.error-toast {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100% - 32px));
+  padding: 8px 8px 8px 14px;
+  border: 1px solid #a8433f;
+  border-radius: 6px;
+  background: #3a2222;
+}
+
+.error-toast button {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.info-list dt {
+  color: var(--text-dim);
+}
+
+.info-list dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .side-panel {
   width: 280px;
   overflow-y: auto;

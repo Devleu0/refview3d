@@ -34,6 +34,8 @@ export class SceneManager {
   private readonly resizeObserver: ResizeObserver
   private readonly grid: THREE.GridHelper
   private modelRoot: THREE.Object3D | null = null
+  /** 현재 모델의 바운딩 구 반지름 (모델이 없으면 0) */
+  private modelRadius = 0
   private frameRequested = false
   private disposed = false
 
@@ -113,6 +115,9 @@ export class SceneManager {
       const offset = this.camera.position.clone().sub(target)
       const ratio = Math.tan(THREE.MathUtils.degToRad(prev / 2)) / Math.tan(THREE.MathUtils.degToRad(fov / 2))
       offset.multiplyScalar(ratio)
+      // 광각으로 크게 당겨도 카메라가 모델 안으로 들어가지는 않게 한다.
+      const minDistance = this.modelRadius * 1.02
+      if (offset.length() < minDistance) offset.setLength(minDistance)
       this.camera.position.copy(target).add(offset)
       this.updateClipping(offset.length())
     }
@@ -163,8 +168,11 @@ export class SceneManager {
       disposeObject(this.modelRoot)
     }
     this.modelRoot = object
+    this.modelRadius = 0
     if (object) {
       this.scene.add(object)
+      const box = new THREE.Box3().setFromObject(object)
+      if (!box.isEmpty()) this.modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius
       this.placeGrid(object)
       this.frame(PRESET_DIRECTIONS.threeQuarter)
     } else {
