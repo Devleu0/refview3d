@@ -25,7 +25,18 @@ export interface ModelSource {
  * 로더는 처음 쓰일 때 동적으로 가져와 시작 번들을 가볍게 유지한다.
  */
 export async function loadModel(source: ModelSource): Promise<LoadedModel> {
-  const { object, animations } = await parse(source)
+  let parsed: Awaited<ReturnType<typeof parse>>
+  try {
+    parsed = await parse(source)
+  } catch (err) {
+    // 파서 오류(JSON 구문 오류 등)는 그대로 보여주면 이해하기 어려우므로 안내를 붙인다.
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new Error(
+      `${source.name}을(를) 읽지 못했습니다. 파일이 손상되었거나 ${source.format.toUpperCase()} 형식이 아닐 수 있습니다. (${detail})`,
+      { cause: err },
+    )
+  }
+  const { object, animations } = parsed
   object.name = object.name || source.name
   prepare(object)
   return {
@@ -55,18 +66,33 @@ async function parse({ url, format }: ModelSource): Promise<{ object: THREE.Obje
     case 'obj': {
       const { OBJLoader } = await import('three/examples/jsm/loaders/OBJLoader.js')
       const group = await new OBJLoader().loadAsync(url)
+      // MTL을 읽지 않으므로 OBJLoader는 항상 흰색 Phong 기본 재질을 만든다. 조명에 하얗게 날아가므로 바꾼다.
+      group.traverse((node) => {
+        const mesh = node as THREE.Mesh
+        if (!mesh.isMesh) return
+        const toNeutral = (m: THREE.Material) =>
+          m instanceof THREE.MeshPhongMaterial ? neutralMaterial({ flatShading: m.flatShading, vertexColors: m.vertexColors }) : m
+        mesh.material = Array.isArray(mesh.material) ? mesh.material.map(toNeutral) : toNeutral(mesh.material)
+      })
       return { object: group, animations: [] }
     }
     case 'stl': {
       const { STLLoader } = await import('three/examples/jsm/loaders/STLLoader.js')
       const geometry = await new STLLoader().loadAsync(url)
       if (!geometry.hasAttribute('normal')) geometry.computeVertexNormals()
-      const material = geometry.hasAttribute('color')
-        ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 })
-        : new THREE.MeshStandardMaterial({ color: 0xc8c8cc, roughness: 0.7 })
+      const material = neutralMaterial({ vertexColors: geometry.hasAttribute('color') })
       return { object: new THREE.Mesh(geometry, material), animations: [] }
     }
   }
+}
+
+/** 그림 참고용 중성 회색 재질. 정점 색이 있으면 그 색을 쓴다. */
+function neutralMaterial(params: THREE.MeshStandardMaterialParameters = {}) {
+  return new THREE.MeshStandardMaterial({
+    color: params.vertexColors ? 0xffffff : 0xc8c8cc,
+    roughness: 0.7,
+    ...params,
+  })
 }
 
 /** 재질이 없거나 단색 기본값뿐인 모델(OBJ 등)을 그림 참고에 맞는 중성 회색으로 맞춘다. */
@@ -78,9 +104,7 @@ function prepare(root: THREE.Object3D) {
     mesh.receiveShadow = true
     // 스킨드 메시는 포즈에 따라 바운딩 박스가 바뀌어 잘못 컬링되는 일이 잦다.
     if ((mesh as THREE.SkinnedMesh).isSkinnedMesh) mesh.frustumCulled = false
-    if (!mesh.material) {
-      mesh.material = new THREE.MeshStandardMaterial({ color: 0xc8c8cc, roughness: 0.7 })
-    }
+    if (!mesh.material) mesh.material = neutralMaterial()
   })
 }
 

@@ -89,6 +89,8 @@ export class SceneManager {
     if (this.disposed) return
     // 감속(damping) 중이면 change 이벤트가 다시 renderFrame을 요청한다.
     this.controls.update()
+    // 휠 줌 등 마우스 조작으로 거리가 바뀌어도 모델이 잘리지 않도록 매 프레임 맞춘다.
+    this.updateClipping()
     this.renderer.render(this.scene, this.camera)
   }
 
@@ -122,7 +124,6 @@ export class SceneManager {
       const minDistance = this.modelRadius * 1.02
       if (offset.length() < minDistance) offset.setLength(minDistance)
       this.camera.position.copy(target).add(offset)
-      this.updateClipping(offset.length())
     }
     this.camera.fov = fov
     this.camera.updateProjectionMatrix()
@@ -149,8 +150,6 @@ export class SceneManager {
     this.markProgrammaticChange()
     this.controls.target.copy(sphere.center)
     this.camera.position.copy(sphere.center).addScaledVector(dir, distance)
-    this.updateClipping(distance, sphere.radius)
-    this.camera.updateProjectionMatrix()
     this.controls.update()
     this.requestRender()
   }
@@ -176,7 +175,10 @@ export class SceneManager {
     if (internal._scale !== undefined) internal._scale = 1
   }
 
-  private updateClipping(distance: number, radius = distance) {
+  /** 대상까지의 거리와 모델 크기에 맞춰 near/far를 정한다. */
+  private updateClipping() {
+    const distance = this.camera.position.distanceTo(this.controls.target)
+    const radius = this.modelRadius || distance
     this.camera.near = Math.max(distance / 1000, 0.001)
     this.camera.far = Math.max(distance + radius * 10, 100)
     this.camera.updateProjectionMatrix()
@@ -190,10 +192,13 @@ export class SceneManager {
     }
     this.modelRoot = object
     this.modelRadius = 0
+    this.controls.maxDistance = Infinity
     if (object) {
       this.scene.add(object)
       const box = new THREE.Box3().setFromObject(object)
       if (!box.isEmpty()) this.modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius
+      // 휠로 끝없이 멀어져 모델을 잃어버리지 않게 한다. 망원 10°로 맞춘 거리(약 13배)보다 넉넉하게 둔다.
+      if (this.modelRadius > 0) this.controls.maxDistance = this.modelRadius * 100
       this.placeGrid(object)
       this.frame(PRESET_DIRECTIONS.threeQuarter)
     } else {
@@ -229,7 +234,7 @@ export class SceneManager {
     this.camera.position.fromArray(state.position)
     this.controls.target.fromArray(state.target)
     this.camera.fov = state.fov
-    this.updateClipping(this.camera.position.distanceTo(this.controls.target))
+    this.camera.updateProjectionMatrix()
     this.controls.update()
     this.requestRender()
   }

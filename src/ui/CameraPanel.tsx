@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useViewerStore } from '../store/viewerStore'
-import { recordCameraChange, withCameraHistory } from '../viewer/cameraHistory'
+import { createMergingRecorder, withCameraHistory } from '../viewer/cameraHistory'
 import type { CameraState, ViewPreset } from '../viewer/SceneManager'
 import { Panel } from './Panel'
 
@@ -10,7 +10,10 @@ const FOV_PRESETS = [
   { label: '광각', fov: 90 },
 ] as const
 
-const VIEW_PRESETS: { label: string; preset: ViewPreset }[] = [
+/** 슬라이더 값을 바꾸는 키 */
+const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'])
+
+const VIEW_PRESETS:{ label: string; preset: ViewPreset }[] = [
   { label: '정면', preset: 'front' },
   { label: '후면', preset: 'back' },
   { label: '좌측', preset: 'left' },
@@ -29,12 +32,14 @@ export function CameraPanel() {
   const setGridVisible = useViewerStore((s) => s.setGridVisible)
 
   // 슬라이더를 끄는 동안은 실시간으로 적용하고, 손을 뗄 때 한 번만 기록한다.
+  // 화살표 키를 연달아 누른 것도 하나로 합친다.
+  const recordFov = useMemo(() => createMergingRecorder('화각 변경'), [])
   const dragStart = useRef<CameraState | null>(null)
   const beginFovEdit = () => {
     if (viewer && !dragStart.current) dragStart.current = viewer.getCameraState()
   }
   const endFovEdit = () => {
-    if (viewer && dragStart.current) recordCameraChange('화각 변경', dragStart.current, viewer.getCameraState())
+    if (viewer && dragStart.current) recordFov(dragStart.current, viewer.getCameraState())
     dragStart.current = null
   }
 
@@ -51,7 +56,10 @@ export function CameraPanel() {
           step={1}
           value={fov}
           onPointerDown={beginFovEdit}
-          onKeyDown={beginFovEdit}
+          onKeyDown={(e) => {
+            // Ctrl+Z 같은 단축키에서 시작하면 Undo 직전 상태를 잡아 엉뚱한 항목이 기록된다.
+            if (SLIDER_KEYS.has(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) beginFovEdit()
+          }}
           onChange={(e) => {
             beginFovEdit()
             setFov(Number(e.target.value))
