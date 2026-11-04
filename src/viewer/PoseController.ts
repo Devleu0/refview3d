@@ -148,6 +148,8 @@ export class PoseController {
     this.enabled = enabled
     this.helpers.visible = enabled && this.bones.length > 0
     if (!enabled) this.select(null)
+    // 켜자마자 관절 점이 보이도록 다시 그린다.
+    this.callbacks.onChange()
   }
 
   setMode(mode: PoseMode) {
