@@ -8,6 +8,7 @@ import {
   frameModel,
   toggleGrayscale,
   toggleGrid,
+  toggleGuides,
   toggleHiddenLines,
   toggleOutline,
   VIEW_PRESETS,
@@ -30,6 +31,7 @@ const KEY_ACTIONS: Record<string, () => void> = {
   h: toggleHiddenLines,
   g: toggleGrid,
   b: toggleGrayscale,
+  p: toggleGuides,
   ...Object.fromEntries(VIEW_PRESETS.map((v) => [v.key, () => applyViewPreset(v.preset)])),
 }
 

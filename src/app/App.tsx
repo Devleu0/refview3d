@@ -1,6 +1,7 @@
 import { useModelStore } from '../store/modelStore'
 import { EmptyState } from '../ui/EmptyState'
 import { LibraryPanel } from '../ui/LibraryPanel'
+import { PerspectiveOverlay } from '../ui/PerspectiveOverlay'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import { SidePanel } from '../ui/SidePanel'
 import { StatusBar } from '../ui/StatusBar'
@@ -25,6 +26,7 @@ export default function App() {
         <LibraryPanel />
         <section className="viewport-slot">
           <Viewport />
+          <PerspectiveOverlay />
           {!hasModel && !loading && <EmptyState />}
           {hasModel && <StatusBar />}
           {hasModel && <ViewDock />}

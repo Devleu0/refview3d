@@ -1,4 +1,5 @@
-import { SHADING_MODES, setShading, toggleGrayscale, toggleGrid, toggleHiddenLines, toggleOutline } from '../app/actions'
+import { SHADING_MODES, setShading, toggleGrayscale, toggleGrid, toggleGuides, toggleHiddenLines, toggleOutline } from '../app/actions'
+import { useGuideStore } from '../store/guideStore'
 import { useAdjustStore } from '../store/adjustStore'
 import { useExportStore } from '../store/exportStore'
 import { useLightStore } from '../store/lightStore'
@@ -15,6 +16,7 @@ export function Toolbar() {
   const hiddenLines = useLineStore((s) => s.settings.hiddenLines)
   const gridVisible = useViewerStore((s) => s.gridVisible)
   const grayscale = useAdjustStore((s) => s.settings.grayscale)
+  const guides = useGuideStore((s) => s.settings.enabled)
   const hasModel = useModelStore((s) => s.model !== null)
   const exportBusy = useExportStore((s) => s.busy)
   const runExport = useExportStore((s) => s.run)
@@ -56,6 +58,9 @@ export function Toolbar() {
         </button>
         <button className="toggle" aria-pressed={grayscale} onClick={toggleGrayscale} title="흑백으로 명도만 보기 (B)">
           흑백
+        </button>
+        <button className="toggle" aria-pressed={guides} onClick={toggleGuides} title="소실점 투시선과 눈높이선 (P)">
+          투시선
         </button>
       </div>
 

@@ -31,7 +31,7 @@ export function ExportPanel() {
         <button className="wide" onClick={() => void run('psd')} disabled={!hasModel || busy}>
           PSD 저장 (레이어) <kbd>Ctrl+Shift+E</kbd>
         </button>
-        <p className="hint">음영 · 그림자 · 은선 · 선화를 각각 레이어로 나눕니다. 켜져 있는 것만 들어갑니다.</p>
+        <p className="hint">음영 · 그림자 · 은선 · 선화를 각각 레이어로 나눕니다. 켜져 있는 것만 들어가고, 투시선은 숨긴 레이어로 들어갑니다.</p>
       </Panel>
     </>
   )

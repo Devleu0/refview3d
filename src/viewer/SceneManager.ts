@@ -8,6 +8,7 @@ import { LineArt } from './LineArt'
 import { ShadingOverride } from './ShadingOverride'
 
 export type ViewPreset = 'front' | 'back' | 'left' | 'right' | 'top' | 'threeQuarter'
+export type PerspectivePreset = 'one' | 'two' | 'threeDown' | 'threeUp'
 
 const PRESET_DIRECTIONS: Record<ViewPreset, THREE.Vector3> = {
   front: new THREE.Vector3(0, 0, 1),
@@ -104,6 +105,17 @@ export class SceneManager {
     // 휠 줌 등 마우스 조작으로 거리가 바뀌어도 모델이 잘리지 않도록 매 프레임 맞춘다.
     this.updateClipping()
     this.draw(this.renderer.getPixelRatio())
+    for (const listener of this.renderListeners) listener()
+  }
+
+  private readonly renderListeners = new Set<() => void>()
+
+  /** 화면을 다시 그린 직후마다 불린다(투시 가이드 오버레이 등 카메라를 따라가는 2D 표시용). 반환값: 해제 함수 */
+  onRender(listener: () => void) {
+    this.renderListeners.add(listener)
+    return () => {
+      this.renderListeners.delete(listener)
+    }
   }
 
   /** 씬과 외곽선을 현재 렌더 대상에 그린다. */
@@ -185,6 +197,32 @@ export class SceneManager {
 
   setViewPreset(preset: ViewPreset) {
     this.frame(PRESET_DIRECTIONS[preset])
+  }
+
+  /**
+   * 대상과 거리는 그대로 두고, 지금 보는 쪽에서 가장 가까운 방향으로 카메라를 돌려 1·2·3점 투시를 만든다.
+   * - one: 축에 맞춰(0·90·180·270°) 수평으로 본다 → 깊이 방향만 모인다
+   * - two: 대각선(45°…)에서 수평으로 본다 → 좌우 두 방향이 모이고 세로는 평행
+   * - threeDown / threeUp: 대각선에서 내려다보거나 올려다본다 → 세로까지 세 방향이 모인다
+   */
+  setPerspectivePreset(kind: PerspectivePreset) {
+    const offset = this.camera.position.clone().sub(this.controls.target)
+    const distance = offset.length() || 1
+    const yaw = Math.atan2(offset.x, offset.z)
+    const quarter = Math.PI / 2
+    // 기본 3/4 시점(정확히 45°)처럼 가운데에 걸리면 정면 쪽(0°)으로 기울게 아주 조금 뺀다.
+    const tie = 1e-6
+    const snapped =
+      kind === 'one'
+        ? Math.round(yaw / quarter - Math.sign(yaw) * tie) * quarter
+        : Math.round((yaw - quarter / 2) / quarter) * quarter + quarter / 2
+    const pitch = THREE.MathUtils.degToRad(kind === 'threeDown' ? 35 : kind === 'threeUp' ? -25 : 0)
+    const dir = new THREE.Vector3(Math.sin(snapped) * Math.cos(pitch), Math.sin(pitch), Math.cos(snapped) * Math.cos(pitch))
+
+    this.markProgrammaticChange()
+    this.camera.position.copy(this.controls.target).addScaledVector(dir, distance)
+    this.controls.update()
+    this.requestRender()
   }
 
   /**

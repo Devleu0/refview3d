@@ -5,6 +5,7 @@ import { ExportPanel } from './ExportPanel'
 import { HistoryPanel } from './HistoryPanel'
 import { LightPanel } from './LightPanel'
 import { LinePanel } from './LinePanel'
+import { PerspectivePanel } from './PerspectivePanel'
 
 const TABS: { tab: SideTab; label: string }[] = [
   { tab: 'camera', label: '카메라' },
@@ -39,7 +40,12 @@ export function SidePanel() {
         ))}
       </nav>
       <div className="side-body" role="tabpanel" id="side-tabpanel" aria-labelledby={`tab-${sideTab}`}>
-        {sideTab === 'camera' && <CameraPanel />}
+        {sideTab === 'camera' && (
+          <>
+            <CameraPanel />
+            <PerspectivePanel />
+          </>
+        )}
         {sideTab === 'light' && <LightPanel />}
         {sideTab === 'lines' && <LinePanel />}
         {sideTab === 'adjust' && <AdjustPanel />}
