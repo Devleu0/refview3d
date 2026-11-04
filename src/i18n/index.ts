@@ -98,8 +98,31 @@ export function translateBackendError(raw: unknown) {
   return t(key, { detail: rest.join(':') })
 }
 
-/** 기본 마네킹 관절 이름(영문 id)을 현재 언어로. 다른 모델의 뼈 이름은 그대로 둔다. */
+/** MMD 표준 뼈 이름 → 기본 마네킹 관절 id. 같은 번역을 쓴다. */
+const MMD_BONES: Record<string, string> = {
+  下半身: 'hips',
+  上半身: 'spine',
+  上半身2: 'chest',
+  首: 'neck',
+  頭: 'head',
+  左肩: 'shoulder.L',
+  左腕: 'upperArm.L',
+  左ひじ: 'lowerArm.L',
+  左手首: 'hand.L',
+  左足: 'upperLeg.L',
+  左ひざ: 'lowerLeg.L',
+  左足首: 'foot.L',
+  右肩: 'shoulder.R',
+  右腕: 'upperArm.R',
+  右ひじ: 'lowerArm.R',
+  右手首: 'hand.R',
+  右足: 'upperLeg.R',
+  右ひざ: 'lowerLeg.R',
+  右足首: 'foot.R',
+}
+
+/** 기본 마네킹·MMD 표준 관절 이름을 현재 언어로. 다른 모델의 뼈 이름은 그대로 둔다. */
 export function boneLabel(name: string) {
-  const key = `bone.${name}`
+  const key = `bone.${MMD_BONES[name] ?? name}`
   return hasMessage(key) ? t(key) : name || t('pose.unnamedBone')
 }

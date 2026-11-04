@@ -87,6 +87,16 @@ async function parse({ url, format, resourcePath }: ModelSource): Promise<{ obje
       })
       return { object: group, animations: [] }
     }
+    case 'pmd':
+    case 'pmx': {
+      const { parseMmd, buildMmd } = await import('./mmd')
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const model = parseMmd(await response.arrayBuffer(), format)
+      // 브라우저에서 연 단일 파일(blob:)은 옆 폴더의 텍스처를 찾을 수 없다.
+      const object = await buildMmd(model, { resourcePath })
+      return { object, animations: [] }
+    }
     case 'stl': {
       const { STLLoader } = await import('three/examples/jsm/loaders/STLLoader.js')
       const geometry = await new STLLoader().loadAsync(url)

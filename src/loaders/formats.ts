@@ -1,10 +1,10 @@
 import { t } from '../i18n'
 
-export const MODEL_FORMATS = ['obj', 'stl', 'fbx', 'gltf', 'glb'] as const
+export const MODEL_FORMATS = ['obj', 'stl', 'fbx', 'gltf', 'glb', 'pmx', 'pmd'] as const
 export type ModelFormat = (typeof MODEL_FORMATS)[number]
 
 /** 뼈대·애니메이션을 담을 수 있는 포맷 */
-export const RIGGED_FORMATS: readonly ModelFormat[] = ['fbx', 'gltf', 'glb']
+export const RIGGED_FORMATS: readonly ModelFormat[] = ['fbx', 'gltf', 'glb', 'pmx', 'pmd']
 
 export function getExtension(name: string) {
   const dot = name.lastIndexOf('.')

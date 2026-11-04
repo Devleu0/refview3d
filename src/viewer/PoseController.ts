@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { boneLabel, t } from '../i18n'
+import { applyBoneLinks } from './boneLinks'
 
 /** 회전(FK): 고른 관절을 직접 돌린다. IK: 고른 관절을 끌면 위쪽 관절들이 따라 굽는다. */
 export type PoseMode = 'rotate' | 'ik'
@@ -34,6 +35,10 @@ const PICK_RADIUS_PX = 14
  * 뼈대가 있는 모델(FBX·GLTF, 기본 마네킹)의 포즈를 잡는다.
  *
  * 관절 표시와 기즈모는 모델 밖의 별도 그룹(helpers)에 두어, 바운딩 박스·외곽선·내보내기에 섞이지 않게 한다.
+ *
+ * 뼈의 userData 표시:
+ * - poseHidden: 관절 목록에서 뺀다 (MMD의 IK·보조 뼈). 위아래 관절은 이 뼈를 건너뛰어 이어진다.
+ * - poseIkSkip: IK로 굽힐 때 돌리지 않는다 (축이 고정된 비틀기 뼈).
  */
 export class PoseController {
   /** 관절 점과 뼈대 선. 씬에 직접 추가한다. */
@@ -41,6 +46,8 @@ export class PoseController {
   readonly gizmo: TransformControls
 
   private bones: THREE.Bone[] = []
+  private boneSet = new Set<THREE.Bone>()
+  private root: THREE.Object3D | null = null
   private rest: PoseSnapshot = []
   private enabled = false
   private mode: PoseMode = 'rotate'
@@ -86,6 +93,7 @@ export class PoseController {
       if (this.mode === 'ik' && this.selected && this.gizmo.object === this.ikTarget) {
         this.solveIK(this.selected, this.ikTarget.position)
       }
+      this.propagate()
       this.callbacks.onChange()
     })
     this.gizmo.addEventListener('mouseUp', () => this.commitDrag())
@@ -104,7 +112,13 @@ export class PoseController {
     this.select(null)
     this.clearMarkers()
     this.bones = []
-    if (root) root.traverse((node) => (node as THREE.Bone).isBone && this.bones.push(node as THREE.Bone))
+    this.root = root
+    if (root) {
+      root.traverse((node) => {
+        if ((node as THREE.Bone).isBone && !node.userData.poseHidden) this.bones.push(node as THREE.Bone)
+      })
+    }
+    this.boneSet = new Set(this.bones)
     this.rest = this.snapshot()
     this.markerSize = Math.max(radius, 1e-3) * 0.018
 
@@ -115,7 +129,7 @@ export class PoseController {
       this.helpers.add(marker)
       return marker
     })
-    const pairs = this.bones.filter((b) => (b.parent as THREE.Bone | null)?.isBone).length
+    const pairs = this.bones.filter((b) => this.poseParent(b)).length
     if (pairs > 0) {
       const geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pairs * 6), 3))
@@ -160,8 +174,8 @@ export class PoseController {
       let k = 0
       const q = new THREE.Vector3()
       for (const bone of this.bones) {
-        const parent = bone.parent as THREE.Bone | null
-        if (!parent?.isBone) continue
+        const parent = this.poseParent(bone)
+        if (!parent) continue
         bone.getWorldPosition(p)
         parent.getWorldPosition(q)
         position.setXYZ(k++, q.x, q.y, q.z)
@@ -175,7 +189,7 @@ export class PoseController {
     this.selected = bone
     this.attachGizmo()
     this.callbacks.onSelect(
-      bone ? { name: bone.name, scale: bone.scale.x, hasParent: !!(bone.parent as THREE.Bone | null)?.isBone } : null,
+      bone ? { name: bone.name, scale: bone.scale.x, hasParent: !!this.poseParent(bone) } : null,
     )
     this.callbacks.onChange()
   }
@@ -185,6 +199,7 @@ export class PoseController {
     if (!this.selected) return
     this.selected.scale.setScalar(scale)
     this.selected.updateMatrixWorld(true)
+    this.propagate()
     this.callbacks.onChange()
   }
 
@@ -217,10 +232,11 @@ export class PoseController {
       b.quaternion.fromArray(v, 3)
       b.scale.fromArray(v, 7)
     })
-    this.bones[0]?.parent?.updateMatrixWorld(true)
+    this.root?.updateMatrixWorld(true)
+    this.propagate()
     if (this.selected) {
       this.syncIkTarget()
-      this.callbacks.onSelect({ name: this.selected.name, scale: this.selected.scale.x, hasParent: !!(this.selected.parent as THREE.Bone | null)?.isBone })
+      this.callbacks.onSelect({ name: this.selected.name, scale: this.selected.scale.x, hasParent: !!this.poseParent(this.selected) })
     }
     this.callbacks.onChange()
   }
@@ -256,7 +272,7 @@ export class PoseController {
       this.gizmo.getHelper().visible = false
       return
     }
-    const hasParent = !!(bone.parent as THREE.Bone | null)?.isBone
+    const hasParent = !!this.poseParent(bone)
     if (this.mode === 'ik' && hasParent) {
       // 목표점은 helpers(월드 기준) 안에 있으니 월드 좌표로 옮긴다.
       this.syncIkTarget()
@@ -274,6 +290,21 @@ export class PoseController {
       this.gizmo.attach(bone)
     }
     this.gizmo.getHelper().visible = true
+  }
+
+  /** 관절 목록에 있는 가장 가까운 위쪽 뼈 (숨긴 뼈는 건너뛴다) */
+  private poseParent(bone: THREE.Bone): THREE.Bone | null {
+    let node = bone.parent
+    while (node && (node as THREE.Bone).isBone) {
+      if (this.boneSet.has(node as THREE.Bone)) return node as THREE.Bone
+      node = node.parent
+    }
+    return null
+  }
+
+  /** 다른 뼈를 따라 하는 뼈(MMD 付与)를 맞춘다. 메시가 붙은 뼈가 따로 있는 모델에 필요하다. */
+  private propagate() {
+    applyBoneLinks(this.root)
   }
 
   private syncIkTarget() {
@@ -301,7 +332,8 @@ export class PoseController {
     const chain: THREE.Object3D[] = []
     let node = effector.parent
     while (node && (node as THREE.Bone).isBone && chain.length < this.chainLength) {
-      chain.push(node)
+      // 숨긴 뼈와 비틀기 뼈는 굽히지 않고 건너뛴다 (그래도 사슬 길이에는 세지 않는다).
+      if (this.boneSet.has(node as THREE.Bone) && !node.userData.poseIkSkip) chain.push(node)
       node = node.parent
     }
     if (chain.length === 0) return

@@ -18,14 +18,14 @@ Pose a mannequin, set up lighting and perspective, and send clean references to 
 
 ## Features
 
-- **Open your models** — OBJ, STL, FBX, glTF and GLB, by file dialog or drag and drop.
+- **Open your models** — OBJ, STL, FBX, glTF, GLB and MMD (PMX/PMD), by file dialog or drag and drop.
 - **Library** — add folders and browse every model inside as thumbnails. Folders are watched, so new or changed files show up automatically.
 - **Lighting** — key light with shadows, fill and ambient light, six classic presets (3/4, front, side, rim, top, from below).
 - **Shading** — original materials, plain clay, or toon shading with 2–5 tones.
 - **Line art** — clean outlines (silhouettes, overlaps, creases) and dashed hidden lines.
 - **Value check** — grayscale view plus hue, saturation, brightness and contrast.
 - **Perspective guides** — vanishing-point lines and eye level for the current camera, with automatic 1/2/3-point detection and one-click 1/2/3-point camera presets.
-- **Posing** — a built-in wooden mannequin, or your own rigged FBX/glTF. Rotate joints directly or drag hands and feet with IK. Scale joints for stylized proportions.
+- **Posing** — a built-in wooden mannequin, or your own rigged FBX/glTF/MMD model. Rotate joints directly or drag hands and feet with IK. Scale joints for stylized proportions.
 - **Export** — transparent PNG, or a layered PSD (shading, shadow, hidden lines, line art, and a hidden perspective layer) at 1×, 2× or 4× screen size.
 - **Undo everything** — camera, lighting, lines, color and pose changes, with a clickable history list.
 - **8 languages** — English, 한국어, 日本語, 简体中文, 繁體中文, Español, Français, Deutsch.
@@ -70,6 +70,7 @@ Requires Windows 10 or 11 (64-bit). The WebView2 runtime is installed automatica
 |---|---|
 | glTF / GLB | Recommended. Materials, textures, skeletons and animations |
 | FBX | Materials, textures and skeletons |
+| PMX / PMD | MikuMikuDance models: materials, textures and skeletons. MMD IK, morphs and physics are not used — pose with the app's own FK/IK |
 | OBJ | Geometry (MTL materials are not read; shown in neutral gray) |
 | STL | Geometry, vertex colors |
 | SKP | Not supported directly — export to glTF or OBJ from SketchUp |
