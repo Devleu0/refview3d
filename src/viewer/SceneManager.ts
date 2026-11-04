@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { LightSettings } from '../store/lightStore'
+import type { LineSettings } from '../store/lineStore'
 import { LightRig } from './LightRig'
+import { LineArt } from './LineArt'
 import { ShadingOverride } from './ShadingOverride'
 
 export type ViewPreset = 'front' | 'back' | 'left' | 'right' | 'top' | 'threeQuarter'
@@ -14,6 +16,9 @@ const PRESET_DIRECTIONS: Record<ViewPreset, THREE.Vector3> = {
   top: new THREE.Vector3(0, 1, 0.0001),
   threeQuarter: new THREE.Vector3(1, 0.5, 1).normalize(),
 }
+
+/** 내보내기 레이어: 합성 이미지, 음영(모델), 바닥 그림자, 외곽선, 은선 */
+export type ExportLayer = 'composite' | 'shading' | 'shadow' | 'lines' | 'hiddenLines'
 
 export interface CameraState {
   position: [number, number, number]
@@ -38,6 +43,7 @@ export class SceneManager {
   private readonly grid: THREE.GridHelper
   private readonly lights = new LightRig()
   private readonly shading = new ShadingOverride()
+  private readonly lineArt = new LineArt()
   private modelRoot: THREE.Object3D | null = null
   /** 현재 모델의 바운딩 구 반지름 (모델이 없으면 0) */
   private modelRadius = 0
@@ -75,6 +81,7 @@ export class SceneManager {
     this.renderer.shadowMap.type = THREE.PCFShadowMap
     this.lights.fit(new THREE.Vector3(), 5, 0)
     this.scene.add(this.lights.group)
+    this.scene.add(this.lineArt.hiddenGroup)
 
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(container)
@@ -95,7 +102,24 @@ export class SceneManager {
     this.controls.update()
     // 휠 줌 등 마우스 조작으로 거리가 바뀌어도 모델이 잘리지 않도록 매 프레임 맞춘다.
     this.updateClipping()
+    this.draw(this.renderer.getPixelRatio())
+  }
+
+  /** 씬과 외곽선을 현재 렌더 대상에 그린다. */
+  private draw(lineScale: number) {
     this.renderer.render(this.scene, this.camera)
+    this.lineArt.drawOutline(this.renderer, this.camera, this.renderModelOnly, lineScale)
+  }
+
+  /** 모델만 주어진 재질로 렌더한다 (그리드·그림자 바닥·은선 제외). */
+  private renderModelOnly = (material: THREE.Material) => {
+    if (!this.modelRoot) return
+    const hidden = this.scene.children.filter((c) => c !== this.modelRoot && c.visible)
+    for (const c of hidden) c.visible = false
+    this.scene.overrideMaterial = material
+    this.renderer.render(this.scene, this.camera)
+    this.scene.overrideMaterial = null
+    for (const c of hidden) c.visible = true
   }
 
   private resize() {
@@ -218,6 +242,7 @@ export class SceneManager {
       this.lights.fit(new THREE.Vector3(), 5, 0)
       this.requestRender()
     }
+    this.lineArt.setModel(object, this.modelRadius)
   }
 
   /** 조명 배치와 음영 방식을 적용한다. */
@@ -225,6 +250,104 @@ export class SceneManager {
     this.lights.apply(settings)
     this.shading.set(settings.shading, settings.toonSteps)
     this.requestRender()
+  }
+
+  /** 선화(외곽선·은선) 설정을 적용한다. */
+  setLines(settings: LineSettings) {
+    this.lineArt.apply(settings)
+    this.requestRender()
+  }
+
+  /**
+   * 현재 시점을 화면 크기의 scale배로 렌더해 레이어별 캔버스로 돌려준다. 그리드는 넣지 않는다.
+   * 렌더 직후 같은 작업 안에서 복사하므로 preserveDrawingBuffer 없이도 읽을 수 있다.
+   * 켜져 있지 않은 레이어(그림자 끔, 외곽선 끔 등)는 결과에서 빠진다.
+   */
+  renderForExport(scale: number, layers: readonly ExportLayer[]) {
+    const { clientWidth: cssWidth, clientHeight: cssHeight } = this.container
+    const gl = this.renderer.getContext()
+    const maxSize = Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE), this.renderer.capabilities.maxTextureSize)
+    // GPU 한도를 넘으면 비율을 유지한 채 줄인다.
+    const fit = Math.min(scale, maxSize / cssWidth, maxSize / cssHeight)
+    const width = Math.floor(cssWidth * fit)
+    const height = Math.floor(cssHeight * fit)
+
+    const prevRatio = this.renderer.getPixelRatio()
+    const prevSize = this.renderer.getSize(new THREE.Vector2())
+    const gridVisible = this.grid.visible
+    const catcherVisible = this.lights.shadowCatcher.visible
+    const hiddenVisible = this.lineArt.hiddenGroup.visible
+    this.renderer.setPixelRatio(1)
+    this.renderer.setSize(width, height, false)
+    this.grid.visible = false
+    this.controls.update()
+    this.updateClipping()
+
+    const canvases = new Map<ExportLayer, HTMLCanvasElement>()
+    const capture = (layer: ExportLayer) => {
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d')?.drawImage(this.renderer.domElement, 0, 0)
+      canvases.set(layer, canvas)
+    }
+    const setOverlays = (shadow: boolean, hidden: boolean) => {
+      this.lights.shadowCatcher.visible = shadow && catcherVisible
+      this.lineArt.hiddenGroup.visible = hidden && hiddenVisible
+    }
+
+    try {
+      for (const layer of layers) {
+        if (layer === 'composite') {
+          setOverlays(true, true)
+          this.draw(fit)
+        } else if (layer === 'shading') {
+          setOverlays(false, false)
+          this.renderer.render(this.scene, this.camera)
+        } else if (layer === 'shadow') {
+          if (!catcherVisible) continue
+          setOverlays(true, false)
+          // 모델은 그림자만 드리우고 그리지 않는다.
+          this.withModelMaterial(this.invisibleMaterial, () => this.renderer.render(this.scene, this.camera))
+        } else if (layer === 'lines') {
+          if (!this.lineArt.outlineEnabled) continue
+          this.renderer.clear()
+          this.lineArt.drawOutline(this.renderer, this.camera, this.renderModelOnly, fit)
+        } else if (layer === 'hiddenLines') {
+          if (!hiddenVisible) continue
+          setOverlays(false, true)
+          // 깊이만 채워 두고 그 뒤에 가려진 모서리만 그린다.
+          this.withModelMaterial(this.depthOnlyMaterial, () => this.renderer.render(this.scene, this.camera))
+        }
+        capture(layer)
+      }
+    } finally {
+      this.grid.visible = gridVisible
+      setOverlays(true, true)
+      this.renderer.setPixelRatio(prevRatio)
+      this.renderer.setSize(prevSize.x, prevSize.y, false)
+      this.requestRender()
+    }
+    return { width, height, canvases }
+  }
+
+  private readonly invisibleMaterial = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
+  private readonly depthOnlyMaterial = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide })
+
+  /** 모델의 모든 메시 재질을 잠시 바꿔 fn을 실행한다. */
+  private withModelMaterial(material: THREE.Material, fn: () => void) {
+    const saved: [THREE.Mesh, THREE.Material | THREE.Material[]][] = []
+    this.modelRoot?.traverse((node) => {
+      const mesh = node as THREE.Mesh
+      if (!mesh.isMesh) return
+      saved.push([mesh, mesh.material])
+      mesh.material = material
+    })
+    try {
+      fn()
+    } finally {
+      for (const [mesh, original] of saved) mesh.material = original
+    }
   }
 
   /** 모델 크기에 맞춰 그리드와 그림자 바닥을 발 밑으로 옮기고, 조명 거리를 맞춘다. */
@@ -266,6 +389,9 @@ export class SceneManager {
     this.shading.dispose()
     if (this.modelRoot) disposeObject(this.modelRoot)
     this.lights.dispose()
+    this.lineArt.dispose()
+    this.invisibleMaterial.dispose()
+    this.depthOnlyMaterial.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }

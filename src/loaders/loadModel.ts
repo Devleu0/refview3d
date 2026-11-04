@@ -18,6 +18,11 @@ export interface ModelSource {
   name: string
   format: ModelFormat
   path: string | null
+  /**
+   * 외부 텍스처·.bin 같은 상대 경로를 붙일 기준 URL (끝이 폴더 구분자).
+   * 없으면 로더가 url에서 폴더를 추측한다.
+   */
+  resourcePath?: string
 }
 
 /**
@@ -50,17 +55,21 @@ export async function loadModel(source: ModelSource): Promise<LoadedModel> {
   }
 }
 
-async function parse({ url, format }: ModelSource): Promise<{ object: THREE.Object3D; animations: THREE.AnimationClip[] }> {
+async function parse({ url, format, resourcePath }: ModelSource): Promise<{ object: THREE.Object3D; animations: THREE.AnimationClip[] }> {
   switch (format) {
     case 'gltf':
     case 'glb': {
       const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
-      const gltf = await new GLTFLoader().loadAsync(url)
+      const loader = new GLTFLoader()
+      if (resourcePath) loader.setResourcePath(resourcePath)
+      const gltf = await loader.loadAsync(url)
       return { object: gltf.scene, animations: gltf.animations }
     }
     case 'fbx': {
       const { FBXLoader } = await import('three/examples/jsm/loaders/FBXLoader.js')
-      const group = await new FBXLoader().loadAsync(url)
+      const loader = new FBXLoader()
+      if (resourcePath) loader.setResourcePath(resourcePath)
+      const group = await loader.loadAsync(url)
       return { object: group, animations: group.animations }
     }
     case 'obj': {

@@ -12,7 +12,7 @@ export class LightRig {
   private readonly fill = new THREE.DirectionalLight(0xdfe6ff)
   private readonly ambient = new THREE.HemisphereLight(0xffffff, 0x50505a)
   /** 바닥에 그림자만 그리는 투명 평면 */
-  private readonly shadowCatcher: THREE.Mesh<THREE.PlaneGeometry, THREE.ShadowMaterial>
+  readonly shadowCatcher: THREE.Mesh<THREE.PlaneGeometry, THREE.ShadowMaterial>
 
   private center = new THREE.Vector3()
   private radius = 5
@@ -24,7 +24,7 @@ export class LightRig {
     this.key.shadow.bias = -0.0005
     this.group.add(this.key, this.key.target, this.fill, this.fill.target, this.ambient)
 
-    this.shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.35 }))
+    this.shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.35, depthWrite: false }))
     this.shadowCatcher.rotation.x = -Math.PI / 2
     this.shadowCatcher.receiveShadow = true
     this.group.add(this.shadowCatcher)

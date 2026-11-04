@@ -9,7 +9,10 @@ export async function openModelFromPath(path: string): Promise<LoadedModel> {
   if (!format) throw new Error(unsupportedMessage(name))
   // 모델 폴더를 asset 프로토콜 허용 범위에 추가해야 텍스처·.bin까지 읽을 수 있다.
   await invoke('allow_model_dir', { path })
-  return loadModel({ url: convertFileSrc(path), name, format, path })
+  // convertFileSrc는 경로 전체를 한 덩어리로 인코딩해(Windows의 \ → %5C) 로더가 폴더를 알아내지 못한다.
+  // 그러면 외부 .bin·텍스처를 asset 루트에서 찾다 실패하므로, 폴더 URL을 따로 넘긴다.
+  const dir = path.slice(0, path.length - name.length)
+  return loadModel({ url: convertFileSrc(path), name, format, path, resourcePath: convertFileSrc(dir) })
 }
 
 /**

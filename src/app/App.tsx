@@ -1,7 +1,9 @@
 import { useModelStore } from '../store/modelStore'
 import { CameraPanel } from '../ui/CameraPanel'
+import { ExportPanel } from '../ui/ExportPanel'
 import { HistoryButtons } from '../ui/HistoryButtons'
 import { LightPanel } from '../ui/LightPanel'
+import { LinePanel } from '../ui/LinePanel'
 import { ModelPanel } from '../ui/ModelPanel'
 import { OpenModelButton } from '../ui/OpenModelButton'
 import { Viewport } from '../viewer/Viewport'
@@ -45,6 +47,8 @@ export default function App() {
           <ModelPanel />
           <CameraPanel />
           <LightPanel />
+          <LinePanel />
+          <ExportPanel />
         </aside>
       </main>
     </div>
