@@ -291,7 +291,9 @@ button.primary kbd {
 
 .side-tabs button {
   flex: 1;
+  min-width: 0;
   padding: 10px 0 9px;
+  font-size: 12.5px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;

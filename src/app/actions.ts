@@ -2,6 +2,8 @@ import { updateAdjustWithHistory, useAdjustStore } from '../store/adjustStore'
 import { updateLightWithHistory, useLightStore, type ShadingMode } from '../store/lightStore'
 import { updateGuidesWithHistory, useGuideStore } from '../store/guideStore'
 import { updateLinesWithHistory, useLineStore } from '../store/lineStore'
+import { usePoseStore } from '../store/poseStore'
+import { useUiStore } from '../store/uiStore'
 import { useViewerStore } from '../store/viewerStore'
 import { withCameraHistory } from '../viewer/cameraHistory'
 import type { PerspectivePreset, ViewPreset } from '../viewer/SceneManager'
@@ -81,4 +83,21 @@ export function applyPerspectivePreset(kind: PerspectivePreset) {
   const label = PERSPECTIVE_PRESETS.find((p) => p.kind === kind)?.label ?? kind
   withCameraHistory(`${label} 투시 시점`, (viewer) => viewer.setPerspectivePreset(kind))
   if (!useGuideStore.getState().settings.enabled) updateGuidesWithHistory('투시선 켜기', { enabled: true })
+}
+
+/** 포즈 편집 켜기/끄기. 켤 때는 포즈 탭을 보여 준다. */
+export function togglePoseMode() {
+  const on = !usePoseStore.getState().enabled
+  usePoseStore.getState().setEnabled(on)
+  if (on) useUiStore.getState().setSideTab('pose')
+}
+
+/** 회전 ↔ IK */
+export function togglePoseTool() {
+  const { enabled, mode, setMode } = usePoseStore.getState()
+  if (enabled) setMode(mode === 'rotate' ? 'ik' : 'rotate')
+}
+
+export function clearPoseSelection() {
+  useViewerStore.getState().viewer?.pose.select(null)
 }

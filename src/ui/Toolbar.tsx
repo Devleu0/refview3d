@@ -1,4 +1,14 @@
-import { SHADING_MODES, setShading, toggleGrayscale, toggleGrid, toggleGuides, toggleHiddenLines, toggleOutline } from '../app/actions'
+import {
+  SHADING_MODES,
+  setShading,
+  toggleGrayscale,
+  toggleGrid,
+  toggleGuides,
+  toggleHiddenLines,
+  toggleOutline,
+  togglePoseMode,
+} from '../app/actions'
+import { usePoseStore } from '../store/poseStore'
 import { useGuideStore } from '../store/guideStore'
 import { useAdjustStore } from '../store/adjustStore'
 import { useExportStore } from '../store/exportStore'
@@ -17,6 +27,8 @@ export function Toolbar() {
   const gridVisible = useViewerStore((s) => s.gridVisible)
   const grayscale = useAdjustStore((s) => s.settings.grayscale)
   const guides = useGuideStore((s) => s.settings.enabled)
+  const posing = usePoseStore((s) => s.enabled)
+  const rigged = useModelStore((s) => !!s.model?.hasSkeleton)
   const hasModel = useModelStore((s) => s.model !== null)
   const exportBusy = useExportStore((s) => s.busy)
   const runExport = useExportStore((s) => s.run)
@@ -63,6 +75,17 @@ export function Toolbar() {
           투시선
         </button>
       </div>
+
+      <span className="toolbar-sep" />
+      <button
+        className="toggle"
+        aria-pressed={posing}
+        onClick={togglePoseMode}
+        disabled={!rigged}
+        title={rigged ? '관절을 골라 포즈 잡기 (R)' : '뼈대가 있는 모델이나 기본 마네킹에서 쓸 수 있습니다'}
+      >
+        포즈
+      </button>
 
       <span className="toolbar-spacer" />
       <div className="toolbar-group" role="group" aria-label="내보내기">

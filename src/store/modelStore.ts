@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import type { LoadedModel } from '../loaders/loadModel'
+import { createMannequin } from '../loaders/mannequin'
 import { openModelFromFile, openModelFromPath } from '../loaders/openModel'
 import { useHistoryStore } from './historyStore'
+import { usePoseStore } from './poseStore'
 import { useViewerStore } from './viewerStore'
 
 type ModelInfo = Omit<LoadedModel, 'object'>
@@ -13,6 +15,8 @@ interface ModelState {
 
   openPath: (path: string) => Promise<void>
   openFile: (file: File) => Promise<void>
+  /** 앱에 들어 있는 기본 마네킹을 연다. */
+  openMannequin: () => Promise<void>
   close: () => void
   clearError: () => void
 }
@@ -30,6 +34,8 @@ export const useModelStore = create<ModelState>((set) => {
       useViewerStore.getState().viewer?.setModel(loaded.object)
       // 이전 모델 기준의 기록은 새 모델에 의미가 없으므로 비운다.
       useHistoryStore.getState().clear()
+      // 뼈대 없는 모델에서는 포즈 편집을 끈다.
+      if (!loaded.hasSkeleton) usePoseStore.getState().setEnabled(false)
       const { object: _object, ...info } = loaded
       set({ model: info, loading: null })
     } catch (err) {
@@ -45,6 +51,7 @@ export const useModelStore = create<ModelState>((set) => {
 
     openPath: (path) => run(path, () => openModelFromPath(path)),
     openFile: (file) => run(file.name, () => openModelFromFile(file)),
+    openMannequin: () => run('기본 마네킹', async () => createMannequin()),
     close: () => {
       loadToken++
       useViewerStore.getState().viewer?.setModel(null)

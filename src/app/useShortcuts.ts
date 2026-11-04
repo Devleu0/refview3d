@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import { useExportStore } from '../store/exportStore'
 import { useHistoryStore } from '../store/historyStore'
+import { useModelStore } from '../store/modelStore'
 import { useUiStore } from '../store/uiStore'
 import {
   applyViewPreset,
+  clearPoseSelection,
   cycleShading,
   frameModel,
   toggleGrayscale,
@@ -11,6 +13,8 @@ import {
   toggleGuides,
   toggleHiddenLines,
   toggleOutline,
+  togglePoseMode,
+  togglePoseTool,
   VIEW_PRESETS,
 } from './actions'
 import { openModelDialog } from './openModelDialog'
@@ -32,6 +36,9 @@ const KEY_ACTIONS: Record<string, () => void> = {
   g: toggleGrid,
   b: toggleGrayscale,
   p: toggleGuides,
+  r: () => useModelStore.getState().model?.hasSkeleton && togglePoseMode(),
+  t: togglePoseTool,
+  escape: clearPoseSelection,
   ...Object.fromEntries(VIEW_PRESETS.map((v) => [v.key, () => applyViewPreset(v.preset)])),
 }
 

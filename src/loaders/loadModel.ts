@@ -3,7 +3,8 @@ import type { ModelFormat } from './formats'
 
 export interface LoadedModel {
   name: string
-  format: ModelFormat
+  /** 파일 형식. 앱이 만든 기본 마네킹은 'mannequin' */
+  format: ModelFormat | 'mannequin'
   /** 원본 파일 경로. 브라우저에서 연 파일이면 null */
   path: string | null
   object: THREE.Object3D

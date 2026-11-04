@@ -6,12 +6,14 @@ import { HistoryPanel } from './HistoryPanel'
 import { LightPanel } from './LightPanel'
 import { LinePanel } from './LinePanel'
 import { PerspectivePanel } from './PerspectivePanel'
+import { PosePanel } from './PosePanel'
 
 const TABS: { tab: SideTab; label: string }[] = [
   { tab: 'camera', label: '카메라' },
   { tab: 'light', label: '조명' },
   { tab: 'lines', label: '선화' },
   { tab: 'adjust', label: '보정' },
+  { tab: 'pose', label: '포즈' },
   { tab: 'export', label: '저장' },
   { tab: 'history', label: '기록' },
 ]
@@ -49,6 +51,7 @@ export function SidePanel() {
         {sideTab === 'light' && <LightPanel />}
         {sideTab === 'lines' && <LinePanel />}
         {sideTab === 'adjust' && <AdjustPanel />}
+        {sideTab === 'pose' && <PosePanel />}
         {sideTab === 'export' && <ExportPanel />}
         {sideTab === 'history' && <HistoryPanel />}
       </div>

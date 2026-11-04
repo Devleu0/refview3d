@@ -7,7 +7,8 @@ export function StatusBar() {
   if (!model) return null
 
   const details = [
-    model.format.toUpperCase(),
+    // 기본 마네킹은 이름이 곧 종류라 형식을 따로 적지 않는다.
+    model.format === 'mannequin' ? null : model.format.toUpperCase(),
     `삼각형 ${model.stats.triangles.toLocaleString()}`,
     `메시 ${model.stats.meshes.toLocaleString()}`,
     model.hasSkeleton ? '뼈대 있음' : null,

@@ -168,6 +168,13 @@ export class LineArt {
     renderer.autoClear = previousAutoClear
   }
 
+  /** 모델 자세가 바뀌었을 때, 은선을 쓰고 있으면 지금 자세로 다시 만든다. */
+  refreshHidden() {
+    if (!this.hiddenBuilt) return
+    this.clearHiddenLines()
+    if (this.settings?.hiddenLines) this.buildHiddenLines()
+  }
+
   private buildHiddenLines() {
     this.hiddenBuilt = true
     if (!this.model) return

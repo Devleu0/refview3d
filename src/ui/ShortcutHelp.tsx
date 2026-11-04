@@ -12,6 +12,7 @@ const SHORTCUTS: [string, string][] = [
   ['외곽선 / 은선 / 그리드', 'L / H / G'],
   ['흑백으로 명도 보기', 'B'],
   ['투시선 (소실점·눈높이선)', 'P'],
+  ['포즈 편집 / 회전↔IK / 선택 해제', 'R / T / Esc'],
   ['PNG / PSD 저장', 'Ctrl+E / Ctrl+Shift+E'],
   ['단축키 보기', '?'],
 ]

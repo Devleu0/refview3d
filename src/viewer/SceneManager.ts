@@ -5,6 +5,7 @@ import type { LineSettings } from '../store/lineStore'
 import { disposeObject } from './dispose'
 import { LightRig } from './LightRig'
 import { LineArt } from './LineArt'
+import { PoseController, type PoseSelection, type PoseSnapshot } from './PoseController'
 import { ShadingOverride } from './ShadingOverride'
 
 export type ViewPreset = 'front' | 'back' | 'left' | 'right' | 'top' | 'threeQuarter'
@@ -46,6 +47,12 @@ export class SceneManager {
   private readonly lights = new LightRig()
   private readonly shading = new ShadingOverride()
   private readonly lineArt = new LineArt()
+  /** 뼈대 포즈 편집 (관절 표시·기즈모·IK) */
+  readonly pose: PoseController
+  /** 포즈 끌기 한 번이 끝났을 때 (히스토리 기록용). 뷰포트가 연결한다. */
+  onPoseCommit: ((label: string, before: PoseSnapshot, after: PoseSnapshot) => void) | null = null
+  /** 고른 관절이 바뀌었을 때 */
+  onPoseSelect: ((selection: PoseSelection | null) => void) | null = null
   private modelRoot: THREE.Object3D | null = null
   /** 현재 모델의 바운딩 구 반지름 (모델이 없으면 0) */
   private modelRadius = 0
@@ -76,6 +83,16 @@ export class SceneManager {
     this.controls.screenSpacePanning = true
     this.controls.addEventListener('change', this.requestRender)
 
+    this.pose = new PoseController(this.camera, this.renderer.domElement, this.controls, {
+      onCommit: (label, before, after) => {
+        // 은선은 월드 좌표로 구워 두므로 자세가 바뀌면 다시 만든다.
+        this.lineArt.refreshHidden()
+        this.onPoseCommit?.(label, before, after)
+      },
+      onSelect: (selection) => this.onPoseSelect?.(selection),
+      onChange: this.requestRender,
+    })
+
     this.grid = new THREE.GridHelper(10, 20, 0x6b6c73, 0x4a4b51)
     this.scene.add(this.grid)
 
@@ -84,6 +101,7 @@ export class SceneManager {
     this.lights.fit(new THREE.Vector3(), 5, 0)
     this.scene.add(this.lights.group)
     this.scene.add(this.lineArt.hiddenGroup)
+    this.scene.add(this.pose.helpers, this.pose.gizmo.getHelper())
 
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(container)
@@ -104,6 +122,7 @@ export class SceneManager {
     this.controls.update()
     // 휠 줌 등 마우스 조작으로 거리가 바뀌어도 모델이 잘리지 않도록 매 프레임 맞춘다.
     this.updateClipping()
+    this.pose.updateHelpers()
     this.draw(this.renderer.getPixelRatio())
     for (const listener of this.renderListeners) listener()
   }
@@ -282,6 +301,7 @@ export class SceneManager {
       this.requestRender()
     }
     this.lineArt.setModel(object, this.modelRadius)
+    this.pose.setModel(object, this.modelRadius)
   }
 
   /** 조명 배치와 음영 방식을 적용한다. */
@@ -328,6 +348,11 @@ export class SceneManager {
     const gridVisible = this.grid.visible
     const catcherVisible = this.lights.shadowCatcher.visible
     const hiddenVisible = this.lineArt.hiddenGroup.visible
+    // 관절 점·기즈모는 편집용이라 결과물에 넣지 않는다.
+    const poseHelpersVisible = this.pose.helpers.visible
+    const gizmoVisible = this.pose.gizmo.getHelper().visible
+    this.pose.helpers.visible = false
+    this.pose.gizmo.getHelper().visible = false
     this.renderer.setPixelRatio(1)
     this.renderer.setSize(width, height, false)
     this.grid.visible = false
@@ -379,6 +404,8 @@ export class SceneManager {
       }
     } finally {
       this.grid.visible = gridVisible
+      this.pose.helpers.visible = poseHelpersVisible
+      this.pose.gizmo.getHelper().visible = gizmoVisible
       setOverlays(true, true)
       this.renderer.setPixelRatio(prevRatio)
       this.renderer.setSize(prevSize.x, prevSize.y, false)
@@ -446,6 +473,7 @@ export class SceneManager {
     if (this.modelRoot) disposeObject(this.modelRoot)
     this.lights.dispose()
     this.lineArt.dispose()
+    this.pose.dispose()
     this.invisibleMaterial.dispose()
     this.depthOnlyMaterial.dispose()
     this.renderer.dispose()
