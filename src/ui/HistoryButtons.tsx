@@ -8,10 +8,10 @@ export function HistoryButtons() {
 
   return (
     <div className="toolbar-group">
-      <button onClick={undo} disabled={!last} title={last ? `실행 취소: ${last.label} (Ctrl+Z)` : '실행 취소 (Ctrl+Z)'}>
+      <button className="icon" aria-label="실행 취소" onClick={undo} disabled={!last} title={last ? `실행 취소: ${last.label} (Ctrl+Z)` : '실행 취소 (Ctrl+Z)'}>
         ↶
       </button>
-      <button onClick={redo} disabled={!next} title={next ? `다시 실행: ${next.label} (Ctrl+Y)` : '다시 실행 (Ctrl+Y)'}>
+      <button className="icon" aria-label="다시 실행" onClick={redo} disabled={!next} title={next ? `다시 실행: ${next.label} (Ctrl+Y)` : '다시 실행 (Ctrl+Y)'}>
         ↷
       </button>
     </div>

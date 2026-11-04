@@ -49,3 +49,21 @@ button:disabled {
 input[type='range'] {
   accent-color: var(--accent);
 }
+
+kbd {
+  display: inline-block;
+  padding: 0 5px;
+  margin-left: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

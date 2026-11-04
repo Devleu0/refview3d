@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { SHADING_MODES, setShading } from '../app/actions'
 import {
   createLightRecorder,
   DEFAULT_LIGHT,
@@ -6,17 +7,10 @@ import {
   updateLightWithHistory,
   useLightStore,
   type LightSettings,
-  type ShadingMode,
 } from '../store/lightStore'
 import { Panel } from './Panel'
 import { SliderField } from './SliderField'
 import { useGestureHistory } from './useGestureHistory'
-
-const SHADING_MODES: { label: string; mode: ShadingMode; title: string }[] = [
-  { label: '원본', mode: 'original', title: '모델의 원래 재질' },
-  { label: '클레이', mode: 'clay', title: '회색 단색으로 형태와 명암만 보기' },
-  { label: '툰', mode: 'toon', title: '명암을 몇 단계로 끊어 보기' },
-]
 
 const degrees = (v: number) => `${Math.round(v)}°`
 const decimal = (v: number) => v.toFixed(1)
@@ -48,21 +42,19 @@ export function LightPanel() {
   const elevation = useLightStore((s) => s.settings.keyElevation)
 
   return (
-    <Panel title="조명">
-      <div className="button-row" role="group" aria-label="음영 방식">
-        {SHADING_MODES.map((m) => (
-          <button
-            key={m.mode}
-            title={m.title}
-            aria-pressed={shading === m.mode}
-            onClick={() => updateLightWithHistory(`음영: ${m.label}`, { shading: m.mode })}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-      {shading === 'toon' && <LightSlider label="툰 단계" field="toonSteps" min={2} max={5} format={(v) => `${v}단계`} />}
+    <>
+      <Panel title="음영">
+        <div className="button-row" role="group" aria-label="음영 방식">
+          {SHADING_MODES.map((m) => (
+            <button key={m.mode} title={m.title} aria-pressed={shading === m.mode} onClick={() => setShading(m.mode)}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {shading === 'toon' && <LightSlider label="툰 단계" field="toonSteps" min={2} max={5} format={(v) => `${v}단계`} />}
+      </Panel>
 
+      <Panel title="주광원">
       <div className="button-grid">
         {LIGHT_PRESETS.map((p) => (
           <button
@@ -75,12 +67,9 @@ export function LightPanel() {
         ))}
       </div>
 
-      <LightSlider label="주광원 방향" field="keyAzimuth" min={-180} max={180} format={degrees} />
-      <LightSlider label="주광원 높이" field="keyElevation" min={-45} max={90} format={degrees} />
-      <LightSlider label="주광원 세기" field="keyIntensity" min={0} max={5} step={0.1} format={decimal} />
-      <LightSlider label="보조광 세기" field="fillIntensity" min={0} max={2} step={0.05} format={decimal} />
-      <LightSlider label="환경광 세기" field="ambientIntensity" min={0} max={2} step={0.05} format={decimal} />
-
+      <LightSlider label="방향" field="keyAzimuth" min={-180} max={180} format={degrees} />
+      <LightSlider label="높이" field="keyElevation" min={-45} max={90} format={degrees} />
+      <LightSlider label="세기" field="keyIntensity" min={0} max={5} step={0.1} format={decimal} />
       <label className="check">
         <input
           type="checkbox"
@@ -89,9 +78,15 @@ export function LightPanel() {
         />
         그림자
       </label>
-      <button className="wide" onClick={() => updateLightWithHistory('조명 초기화', DEFAULT_LIGHT)}>
-        조명 초기화
-      </button>
-    </Panel>
+      </Panel>
+
+      <Panel title="보조광 · 환경광">
+        <LightSlider label="보조광 세기" field="fillIntensity" min={0} max={2} step={0.05} format={decimal} />
+        <LightSlider label="환경광 세기" field="ambientIntensity" min={0} max={2} step={0.05} format={decimal} />
+        <button className="wide" onClick={() => updateLightWithHistory('조명 초기화', DEFAULT_LIGHT)}>
+          조명 초기화
+        </button>
+      </Panel>
+    </>
   )
 }

@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { useExportStore } from '../store/exportStore'
 import { useHistoryStore } from '../store/historyStore'
-import { withCameraHistory } from '../viewer/cameraHistory'
+import { useUiStore } from '../store/uiStore'
+import { applyViewPreset, cycleShading, frameModel, toggleGrid, toggleHiddenLines, toggleOutline, VIEW_PRESETS } from './actions'
 import { openModelDialog } from './openModelDialog'
 
 /** 입력 필드에 포커스가 있을 때는 단축키를 가로채지 않는다. */
@@ -11,10 +13,22 @@ export function isTypingTarget(target: EventTarget | null) {
   return target instanceof HTMLInputElement && !['range', 'checkbox', 'radio', 'button'].includes(target.type)
 }
 
+/** 한 글자 단축키 → 동작 */
+const KEY_ACTIONS: Record<string, () => void> = {
+  f: frameModel,
+  s: cycleShading,
+  l: toggleOutline,
+  h: toggleHiddenLines,
+  g: toggleGrid,
+  ...Object.fromEntries(VIEW_PRESETS.map((v) => [v.key, () => applyViewPreset(v.preset)])),
+}
+
 export function useShortcuts() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target) || e.altKey) return
+      // 단축키 도움말(모달)이 열려 있을 때는 Esc 등 대화상자 기본 동작만 둔다.
+      if (useUiStore.getState().helpOpen) return
       const ctrl = e.ctrlKey || e.metaKey
       const key = e.key.toLowerCase()
 
@@ -28,13 +42,23 @@ export function useShortcuts() {
         } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
           e.preventDefault()
           useHistoryStore.getState().redo()
+        } else if (key === 'e') {
+          e.preventDefault()
+          void useExportStore.getState().run(e.shiftKey ? 'psd' : 'png')
         }
         return
       }
 
-      if (key === 'f') {
+      if (e.key === '?') {
         e.preventDefault()
-        withCameraHistory('화면 맞추기', (viewer) => viewer.frame())
+        useUiStore.getState().setHelpOpen(true)
+        return
+      }
+      if (e.shiftKey || e.repeat) return
+      const action = KEY_ACTIONS[key]
+      if (action) {
+        e.preventDefault()
+        action()
       }
     }
     window.addEventListener('keydown', onKeyDown)

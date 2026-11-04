@@ -66,9 +66,6 @@ button.wide {
   width: 100%;
 }
 
-.check.indent {
-  padding-left: 20px;
-}
 
 .check:has(input:disabled) {
   color: var(--text-dim);

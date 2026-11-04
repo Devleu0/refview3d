@@ -1,11 +1,11 @@
 import { useModelStore } from '../store/modelStore'
-import { CameraPanel } from '../ui/CameraPanel'
-import { ExportPanel } from '../ui/ExportPanel'
-import { HistoryButtons } from '../ui/HistoryButtons'
-import { LightPanel } from '../ui/LightPanel'
-import { LinePanel } from '../ui/LinePanel'
-import { ModelPanel } from '../ui/ModelPanel'
-import { OpenModelButton } from '../ui/OpenModelButton'
+import { EmptyState } from '../ui/EmptyState'
+import { ShortcutHelp } from '../ui/ShortcutHelp'
+import { SidePanel } from '../ui/SidePanel'
+import { StatusBar } from '../ui/StatusBar'
+import { ToastHost } from '../ui/ToastHost'
+import { Toolbar } from '../ui/Toolbar'
+import { ViewDock } from '../ui/ViewDock'
 import { Viewport } from '../viewer/Viewport'
 import { useModelDrop } from './useModelDrop'
 import { useShortcuts } from './useShortcuts'
@@ -16,41 +16,23 @@ export default function App() {
   const dragging = useModelDrop()
   const hasModel = useModelStore((s) => s.model !== null)
   const loading = useModelStore((s) => s.loading)
-  const error = useModelStore((s) => s.error)
-  const clearError = useModelStore((s) => s.clearError)
 
   return (
     <div className="app">
-      <header className="toolbar">
-        <span className="brand">RefView3D</span>
-        <OpenModelButton />
-        <HistoryButtons />
-      </header>
+      <Toolbar />
       <main className="workspace">
         <section className="viewport-slot">
           <Viewport />
-          {!hasModel && !loading && (
-            <p className="empty-hint">모델 파일을 끌어다 놓거나 [열기]를 누르세요 · OBJ, STL, FBX, GLTF, GLB</p>
-          )}
+          {!hasModel && !loading && <EmptyState />}
+          {hasModel && <StatusBar />}
+          {hasModel && <ViewDock />}
           {loading && <div className="overlay-badge">불러오는 중…</div>}
           {dragging && <div className="drop-overlay">여기에 놓아 열기</div>}
-          {error && (
-            <div className="error-toast" role="alert">
-              <span>{error}</span>
-              <button onClick={clearError} aria-label="닫기">
-                ✕
-              </button>
-            </div>
-          )}
+          <ToastHost />
         </section>
-        <aside className="side-panel">
-          <ModelPanel />
-          <CameraPanel />
-          <LightPanel />
-          <LinePanel />
-          <ExportPanel />
-        </aside>
+        <SidePanel />
       </main>
+      <ShortcutHelp />
     </div>
   )
 }

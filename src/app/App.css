@@ -4,31 +4,76 @@
   height: 100vh;
 }
 
+/* 툴바 */
+
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 12px;
+  gap: 6px;
+  height: 44px;
+  padding: 0 10px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .brand {
   font-weight: 600;
   letter-spacing: 0.02em;
-  margin-right: 12px;
+  margin-right: 6px;
 }
 
 .toolbar-group {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
-.toolbar-group button {
-  min-width: 30px;
-  padding: 4px 6px;
+.toolbar-sep {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: var(--border);
 }
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar button {
+  height: 30px;
+}
+
+.toolbar button.icon {
+  width: 30px;
+  padding: 0;
+  font-size: 17px;
+}
+
+/* 붙어 있는 버튼 묶음 (하나만 고르는 선택지) */
+.segmented {
+  display: flex;
+}
+
+.segmented > button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.segmented > button:first-child {
+  border-radius: 4px 0 0 4px;
+  margin-left: 0;
+}
+
+.segmented > button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.segmented > button[aria-pressed='true'] {
+  position: relative;
+  z-index: 1;
+}
+
+/* 작업 영역 */
 
 .workspace {
   flex: 1;
@@ -55,25 +100,106 @@
   outline: none;
 }
 
-.empty-hint {
+/* 뷰포트 위에 떠 있는 요소 공통 */
+.status-bar,
+.view-dock,
+.overlay-badge,
+.toast {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  margin: 0;
+  background: rgb(28 29 33 / 0.82);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+}
+
+.status-bar {
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 20px);
+  padding: 4px 4px 4px 12px;
+}
+
+.status-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.status-details {
   color: var(--text-dim);
-  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-close {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.view-dock {
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+}
+
+.view-dock button {
+  padding: 4px 10px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.view-dock button:hover {
+  background: var(--panel-raised);
+}
+
+.dock-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--border);
 }
 
 .overlay-badge {
-  position: absolute;
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgb(0 0 0 / 0.55);
   pointer-events: none;
+}
+
+.toast {
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100% - 32px));
+  padding: 8px 8px 8px 14px;
+}
+
+.toast.error {
+  border-color: #a8433f;
+  background: rgb(58 34 34 / 0.92);
+}
+
+.toast button {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: transparent;
+  border-color: transparent;
 }
 
 .drop-overlay {
@@ -88,50 +214,140 @@
   pointer-events: none;
 }
 
-.error-toast {
+/* 빈 화면 */
+
+.empty-state {
   position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: min(560px, calc(100% - 32px));
-  padding: 8px 8px 8px 14px;
-  border: 1px solid #a8433f;
-  border-radius: 6px;
-  background: #3a2222;
-}
-
-.error-toast button {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  background: transparent;
-  border-color: transparent;
-}
-
-.info-list {
+  inset: 0;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 12px;
-  margin: 0;
+  place-items: center;
+  pointer-events: none;
 }
 
-.info-list dt {
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 36px;
+  border: 1px dashed #5a5b62;
+  border-radius: 10px;
+  background: rgb(28 29 33 / 0.6);
+  pointer-events: auto;
+}
+
+.empty-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-sub,
+.empty-formats {
+  margin: 0;
   color: var(--text-dim);
 }
 
-.info-list dd {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+.empty-formats {
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
+button.primary {
+  padding: 8px 18px;
+  font-size: 14px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0d1726;
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button.primary kbd {
+  background: rgb(0 0 0 / 0.15);
+  border-color: transparent;
+  color: inherit;
+}
+
+/* 사이드 패널 */
+
 .side-panel {
+  display: flex;
+  flex-direction: column;
   width: 280px;
-  overflow-y: auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
+}
+
+.side-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.side-tabs button {
+  flex: 1;
+  padding: 10px 0 9px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--text-dim);
+}
+
+.side-tabs button:hover {
+  color: var(--text);
+}
+
+.side-tabs button[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.side-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 단축키 도움말 */
+
+.help-dialog {
+  width: min(420px, calc(100% - 32px));
+  padding: 18px 20px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.help-dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.help-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.shortcut-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shortcut-list dt {
+  color: var(--text-dim);
+}
+
+.shortcut-list dd {
+  margin: 0;
 }
