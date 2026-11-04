@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { toggleGrayscale } from '../app/actions'
+import { useT, type MessageKey } from '../i18n'
 import { createAdjustRecorder, DEFAULT_ADJUST, updateAdjustWithHistory, useAdjustStore, type AdjustSettings } from '../store/adjustStore'
 import { Panel } from './Panel'
 import { SliderField } from './SliderField'
@@ -11,43 +12,46 @@ function AdjustSlider({
   field,
   ...range
 }: {
-  label: string
+  label: MessageKey
   field: Exclude<keyof AdjustSettings, 'grayscale'>
   min: number
   max: number
   format: (v: number) => string
 }) {
+  const t = useT()
+  const text = t(label)
   const value = useAdjustStore((s) => s.settings[field])
   const update = useAdjustStore((s) => s.update)
-  const record = useMemo(() => createAdjustRecorder(label), [label])
+  const record = useMemo(() => createAdjustRecorder(text), [text])
   const gesture = useGestureHistory(() => useAdjustStore.getState().settings, record)
-  return <SliderField label={label} value={value} onChange={(v) => update({ [field]: v })} {...range} {...gesture} />
+  return <SliderField label={text} value={value} onChange={(v) => update({ [field]: v })} {...range} {...gesture} />
 }
 
 const percent = (v: number) => `${Math.round(v)}%`
 
 export function AdjustPanel() {
+  const t = useT()
   const grayscale = useAdjustStore((s) => s.settings.grayscale)
 
   return (
     <>
-      <Panel title="명도 확인">
+      <Panel title={t('adjust.valuePanel')}>
         <label className="check">
           <input type="checkbox" checked={grayscale} onChange={toggleGrayscale} />
-          흑백으로 보기 <kbd>B</kbd>
+          {t('adjust.grayscale')} <kbd>B</kbd>
         </label>
-        <p className="hint">색을 빼고 명암 단계만 봅니다. 다른 보정을 반영한 뒤의 명도입니다.</p>
+        <p className="hint">{t('adjust.grayscaleHint')}</p>
       </Panel>
 
-      <Panel title="색 보정">
-        <AdjustSlider label="색상" field="hue" min={-180} max={180} format={(v) => `${Math.round(v)}°`} />
-        <AdjustSlider label="채도" field="saturation" min={0} max={200} format={percent} />
-        <AdjustSlider label="명도" field="brightness" min={20} max={200} format={percent} />
-        <AdjustSlider label="대비" field="contrast" min={20} max={200} format={percent} />
-        <button className="wide" onClick={() => updateAdjustWithHistory('보정 초기화', DEFAULT_ADJUST)}>
-          보정 초기화
+      <Panel title={t('adjust.colorPanel')}>
+        <AdjustSlider label="adjust.hue" field="hue" min={-180} max={180} format={(v) => `${Math.round(v)}°`} />
+        <AdjustSlider label="adjust.saturation" field="saturation" min={0} max={200} format={percent} />
+        <AdjustSlider label="adjust.brightness" field="brightness" min={20} max={200} format={percent} />
+        <AdjustSlider label="adjust.contrast" field="contrast" min={20} max={200} format={percent} />
+        <button className="wide" onClick={() => updateAdjustWithHistory(t('history.adjustReset'), DEFAULT_ADJUST)}>
+          {t('adjust.reset')}
         </button>
-        <p className="hint">뷰포트와 내보낸 PNG/PSD에 똑같이 적용됩니다.</p>
+        <p className="hint">{t('adjust.hint')}</p>
       </Panel>
     </>
   )

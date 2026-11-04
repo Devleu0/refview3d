@@ -1,8 +1,10 @@
+import { useT } from '../i18n'
 import { useModelStore } from '../store/modelStore'
 import { useToastStore } from '../store/toastStore'
 
 /** 뷰포트 아래 알림. 모델 오류가 다른 알림보다 우선한다. */
 export function ToastHost() {
+  const t = useT()
   const modelError = useModelStore((s) => s.error)
   const clearModelError = useModelStore((s) => s.clearError)
   const toast = useToastStore((s) => s.toast)
@@ -15,7 +17,7 @@ export function ToastHost() {
   return (
     <div className={`toast ${current.kind}`} role={current.kind === 'error' ? 'alert' : 'status'}>
       <span>{current.text}</span>
-      <button onClick={close} aria-label="알림 닫기">
+      <button onClick={close} aria-label={t('toast.close')}>
         ✕
       </button>
     </div>

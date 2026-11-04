@@ -1,3 +1,4 @@
+import { useT } from '../i18n'
 import { useModelStore } from '../store/modelStore'
 import { EmptyState } from '../ui/EmptyState'
 import { LibraryPanel } from '../ui/LibraryPanel'
@@ -14,6 +15,7 @@ import { useShortcuts } from './useShortcuts'
 import './App.css'
 
 export default function App() {
+  const t = useT()
   useShortcuts()
   const dragging = useModelDrop()
   const hasModel = useModelStore((s) => s.model !== null)
@@ -30,8 +32,8 @@ export default function App() {
           {!hasModel && !loading && <EmptyState />}
           {hasModel && <StatusBar />}
           {hasModel && <ViewDock />}
-          {loading && <div className="overlay-badge">불러오는 중…</div>}
-          {dragging && <div className="drop-overlay">여기에 놓아 열기</div>}
+          {loading && <div className="overlay-badge">{t('viewport.loading')}</div>}
+          {dragging && <div className="drop-overlay">{t('viewport.dropHere')}</div>}
           <ToastHost />
         </section>
         <SidePanel />

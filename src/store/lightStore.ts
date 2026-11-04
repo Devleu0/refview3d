@@ -1,3 +1,4 @@
+import type { MessageKey } from '../i18n'
 import { createSettingsStore } from './settingsStore'
 
 /** 원본 재질 / 회색 클레이 / 단계 음영(툰) */
@@ -31,13 +32,13 @@ export const DEFAULT_LIGHT: LightSettings = {
 }
 
 /** 그림 참고용 대표 조명 배치 */
-export const LIGHT_PRESETS: { label: string; azimuth: number; elevation: number }[] = [
-  { label: '3/4광', azimuth: -45, elevation: 45 },
-  { label: '정면광', azimuth: 0, elevation: 20 },
-  { label: '측광', azimuth: 90, elevation: 10 },
-  { label: '역광', azimuth: 165, elevation: 25 },
-  { label: '탑라이트', azimuth: 0, elevation: 85 },
-  { label: '아래에서', azimuth: 0, elevation: -35 },
+export const LIGHT_PRESETS: { label: MessageKey; azimuth: number; elevation: number }[] = [
+  { label: 'light.preset.threeQuarter', azimuth: -45, elevation: 45 },
+  { label: 'light.preset.front', azimuth: 0, elevation: 20 },
+  { label: 'light.preset.side', azimuth: 90, elevation: 10 },
+  { label: 'light.preset.back', azimuth: 165, elevation: 25 },
+  { label: 'light.preset.top', azimuth: 0, elevation: 85 },
+  { label: 'light.preset.below', azimuth: 0, elevation: -35 },
 ]
 
 const lights = createSettingsStore(DEFAULT_LIGHT)

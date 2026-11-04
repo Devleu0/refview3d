@@ -279,7 +279,7 @@ button.primary kbd {
 .side-panel {
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 320px;
   background: var(--panel);
   border-left: 1px solid var(--border);
 }
@@ -290,10 +290,12 @@ button.primary kbd {
 }
 
 .side-tabs button {
-  flex: 1;
+  /* 번역마다 길이가 달라 글자 폭만큼 나눠 갖는다 */
+  flex: 1 1 auto;
   min-width: 0;
-  padding: 10px 0 9px;
-  font-size: 12.5px;
+  padding: 10px 3px 9px;
+  font-size: 12px;
+  white-space: nowrap;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -567,4 +569,83 @@ button.primary kbd {
 .axis-legend span {
   margin-right: 6px;
   white-space: nowrap;
+}
+
+/* 언어 선택 */
+
+.language-menu {
+  position: relative;
+}
+
+.language-button {
+  min-width: 38px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.language-region {
+  margin-left: 1px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.language-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.35);
+}
+
+.language-list button {
+  width: 100%;
+  padding: 5px 10px;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+}
+
+.language-list button:hover {
+  background: var(--panel-raised);
+}
+
+.language-list button[aria-selected='true'] {
+  color: var(--accent);
+}
+
+/*
+ * 좁은 창에서 툴바가 넘치지 않게 단계적으로 줄인다 (창 최소 폭 960px, 가장 긴 일본어 기준).
+ * 저장 버튼은 저장 탭과 Ctrl+E로도 쓸 수 있어 가장 먼저 숨긴다.
+ */
+@media (max-width: 1300px) {
+  .toolbar button {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .toolbar-sep {
+    margin: 0 2px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .brand {
+    display: none;
+  }
+}
+
+@media (max-width: 1080px) {
+  .toolbar-export {
+    display: none;
+  }
 }

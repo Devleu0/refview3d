@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { t } from '../i18n'
 import { openModelFromPath } from '../loaders/openModel'
 import { disposeObject } from '../viewer/dispose'
 
@@ -38,7 +39,7 @@ class Thumbnailer {
     try {
       this.scene.add(object)
       const box = new THREE.Box3().setFromObject(object)
-      if (box.isEmpty()) throw new Error('빈 모델')
+      if (box.isEmpty()) throw new Error(t('file.emptyModel'))
       const sphere = box.getBoundingSphere(new THREE.Sphere())
       const dir = new THREE.Vector3(1, 0.6, 1.3).normalize()
       const distance = (sphere.radius / Math.sin(THREE.MathUtils.degToRad(this.camera.fov / 2))) * 1.05
@@ -51,7 +52,7 @@ class Thumbnailer {
       const renderer = this.getRenderer()
       renderer.render(this.scene, this.camera)
       const blob = await new Promise<Blob | null>((resolve) => renderer.domElement.toBlob(resolve, 'image/png'))
-      if (!blob) throw new Error('썸네일 이미지를 만들지 못했습니다')
+      if (!blob) throw new Error(t('export.imageFailed'))
       return new Uint8Array(await blob.arrayBuffer())
     } finally {
       this.scene.remove(object)

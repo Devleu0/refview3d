@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { LoadedModel } from '../loaders/loadModel'
+import { t } from '../i18n'
 import { createMannequin } from '../loaders/mannequin'
 import { openModelFromFile, openModelFromPath } from '../loaders/openModel'
 import { useHistoryStore } from './historyStore'
@@ -51,7 +52,7 @@ export const useModelStore = create<ModelState>((set) => {
 
     openPath: (path) => run(path, () => openModelFromPath(path)),
     openFile: (file) => run(file.name, () => openModelFromFile(file)),
-    openMannequin: () => run('기본 마네킹', async () => createMannequin()),
+    openMannequin: () => run(t('mannequin.name'), async () => createMannequin()),
     close: () => {
       loadToken++
       useViewerStore.getState().viewer?.setModel(null)
@@ -65,5 +66,5 @@ export const useModelStore = create<ModelState>((set) => {
 function describeError(err: unknown) {
   if (err instanceof Error) return err.message
   if (typeof err === 'string') return err
-  return '모델을 불러오지 못했습니다.'
+  return t('file.loadFailed')
 }

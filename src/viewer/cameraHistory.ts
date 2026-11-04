@@ -1,4 +1,5 @@
 import { createMergingRecorder, useHistoryStore, type Command } from '../store/historyStore'
+import { t } from '../i18n'
 import { useViewerStore } from '../store/viewerStore'
 import type { CameraState, SceneManager } from './SceneManager'
 
@@ -86,7 +87,7 @@ export function trackOrbitHistory(viewer: SceneManager, mergeWindowMs = 300) {
       after,
       epoch: viewer.cameraEpoch,
       // after는 감속이 끝날 때까지 갱신되므로 실행 시점에 읽는다.
-      command: { label: '시점 이동', undo: () => apply(entry.before), redo: () => apply(entry.after) },
+      command: { label: t('history.orbit'), undo: () => apply(entry.before), redo: () => apply(entry.after) },
     }
     pending = entry
     useHistoryStore.getState().push(entry.command)

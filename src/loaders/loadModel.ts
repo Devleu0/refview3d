@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { t } from '../i18n'
 import type { ModelFormat } from './formats'
 
 export interface LoadedModel {
@@ -38,7 +39,7 @@ export async function loadModel(source: ModelSource): Promise<LoadedModel> {
     // 파서 오류(JSON 구문 오류 등)는 그대로 보여주면 이해하기 어려우므로 안내를 붙인다.
     const detail = err instanceof Error ? err.message : String(err)
     throw new Error(
-      `${source.name}을(를) 읽지 못했습니다. 파일이 손상되었거나 ${source.format.toUpperCase()} 형식이 아닐 수 있습니다. (${detail})`,
+      t('file.parseFailed', { name: source.name, format: source.format.toUpperCase(), detail }),
       { cause: err },
     )
   }

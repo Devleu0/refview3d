@@ -1,5 +1,6 @@
 import { convertFileSrc } from '@tauri-apps/api/core'
 import { memo, useMemo } from 'react'
+import { useT } from '../i18n'
 import type { LibraryModel } from '../library/libraryApi'
 import { filterModels, useLibraryStore } from '../store/libraryStore'
 import { useModelStore } from '../store/modelStore'
@@ -14,7 +15,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-/** 등록 폴더 기준 하위 폴더 경로 ("소품/상자"). 바로 아래 파일이면 빈 문자열 */
+/** 등록 폴더 기준 하위 폴더 경로 ("props/box"). 바로 아래 파일이면 빈 문자열 */
 function subfolderOf(model: LibraryModel, root: string | undefined) {
   if (!root) return ''
   const rel = model.path.slice(root.length).replace(/^[\\/]+/, '')
@@ -25,11 +26,13 @@ const ModelCard = memo(function ModelCard({
   model,
   subfolder,
   current,
+  noPreview,
   onOpen,
 }: {
   model: LibraryModel
   subfolder: string
   current: boolean
+  noPreview: string
   onOpen: (m: LibraryModel) => void
 }) {
   return (
@@ -45,7 +48,7 @@ const ModelCard = memo(function ModelCard({
             // 썸네일이 다시 만들어지면 같은 파일 이름이므로 수정 시각으로 캐시를 무효화한다.
             <img src={`${convertFileSrc(model.thumb)}?v=${model.modified}`} alt="" loading="lazy" draggable={false} />
           ) : (
-            <span className="library-placeholder">{model.thumbFailed ? '미리보기 없음' : model.format.toUpperCase()}</span>
+            <span className="library-placeholder">{model.thumbFailed ? noPreview : model.format.toUpperCase()}</span>
           )}
         </span>
         <span className="library-name">{model.name}</span>
@@ -58,6 +61,7 @@ const ModelCard = memo(function ModelCard({
 
 /** 왼쪽 서랍: 등록한 폴더의 모델을 썸네일로 모아 보고 눌러서 연다. */
 export function LibraryPanel() {
+  const t = useT()
   const open = useUiStore((s) => s.libraryOpen)
   const { available, folders, models, loaded, query, folderId, thumbProgress } = useLibraryStore()
   const { setQuery, setFolderId, addFolder, removeFolder, rescan, open: openModel } = useLibraryStore.getState()
@@ -70,31 +74,31 @@ export function LibraryPanel() {
   if (!available) {
     return (
       <aside className="library-panel">
-        <h2 className="library-title">라이브러리</h2>
-        <p className="hint library-empty">폴더 연결은 데스크톱 앱에서만 쓸 수 있습니다.</p>
+        <h2 className="library-title">{t('library.title')}</h2>
+        <p className="hint library-empty">{t('library.desktopOnly')}</p>
       </aside>
     )
   }
 
   return (
-    <aside className="library-panel" aria-label="라이브러리">
+    <aside className="library-panel" aria-label={t('library.title')}>
       <div className="library-header">
-        <h2 className="library-title">라이브러리</h2>
-        <button onClick={() => void rescan()} disabled={folders.length === 0} title="폴더를 다시 훑기 (보통은 자동으로 반영됩니다)" aria-label="다시 훑기">
+        <h2 className="library-title">{t('library.title')}</h2>
+        <button onClick={() => void rescan()} disabled={folders.length === 0} title={t('library.rescanTitle')} aria-label={t('library.rescan')}>
           ↻
         </button>
-        <button onClick={() => void addFolder()} title="모델이 들어 있는 폴더를 추가합니다 (하위 폴더 포함)">
-          폴더 추가
+        <button onClick={() => void addFolder()} title={t('library.addFolderTitle')}>
+          {t('library.addFolder')}
         </button>
       </div>
 
       {folders.length > 0 && (
         <>
-          <input className="library-search" type="search" placeholder="이름으로 찾기" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="library-search" type="search" placeholder={t('library.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
           <ul className="library-folders">
             <li>
               <button aria-pressed={folderId === null} onClick={() => setFolderId(null)}>
-                전체 <span className="count">{models.length}</span>
+                {t('library.all')} <span className="count">{models.length}</span>
               </button>
             </li>
             {folders.map((f) => (
@@ -105,8 +109,8 @@ export function LibraryPanel() {
                 <button
                   className="library-folder-remove"
                   onClick={() => void removeFolder(f.id)}
-                  title="라이브러리에서 빼기 (파일은 지우지 않습니다)"
-                  aria-label={`${folderName(f.path)} 폴더 빼기`}
+                  title={t('library.removeFolder')}
+                  aria-label={t('library.removeFolderLabel', { name: folderName(f.path) })}
                 >
                   ✕
                 </button>
@@ -118,21 +122,28 @@ export function LibraryPanel() {
 
       {thumbProgress && (
         <p className="hint library-progress" role="status">
-          미리보기 만드는 중 {thumbProgress.done}/{thumbProgress.total}
+          {t('library.thumbProgress', { done: thumbProgress.done, total: thumbProgress.total })}
         </p>
       )}
 
       <div className="library-body">
         {loaded && folders.length === 0 && (
           <div className="library-empty">
-            <p>모델이 들어 있는 폴더를 추가하면 안의 OBJ·STL·FBX·GLTF·GLB를 모아 보여 줍니다.</p>
-            <p className="hint">폴더 안의 파일이 바뀌면 자동으로 반영됩니다.</p>
+            <p>{t('library.emptyIntro')}</p>
+            <p className="hint">{t('library.emptyAuto')}</p>
           </div>
         )}
-        {folders.length > 0 && visible.length === 0 && <p className="hint library-empty">{query ? '찾는 모델이 없습니다.' : '이 폴더에는 모델이 없습니다.'}</p>}
+        {folders.length > 0 && visible.length === 0 && <p className="hint library-empty">{t(query ? 'library.noMatch' : 'library.folderEmpty')}</p>}
         <ul className="library-grid">
           {visible.map((m) => (
-            <ModelCard key={m.id} model={m} subfolder={subfolderOf(m, rootOf.get(m.folderId))} current={m.path === currentPath} onOpen={openModel} />
+            <ModelCard
+              key={m.id}
+              model={m}
+              subfolder={subfolderOf(m, rootOf.get(m.folderId))}
+              current={m.path === currentPath}
+              noPreview={t('library.noPreview')}
+              onOpen={openModel}
+            />
           ))}
         </ul>
       </div>

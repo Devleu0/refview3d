@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
+import { t } from '../i18n'
 
 /** Rust library.rs의 Folder */
 export interface LibraryFolder {
@@ -46,6 +47,6 @@ export const markThumbnailFailed = (model: LibraryModel) =>
 /** 폴더 고르기 대화상자. 취소하면 null */
 export async function pickFolder() {
   const { open } = await import('@tauri-apps/plugin-dialog')
-  const selected = await open({ directory: true, multiple: false, title: '라이브러리에 추가할 폴더' })
+  const selected = await open({ directory: true, multiple: false, title: t('library.pickFolder') })
   return typeof selected === 'string' ? selected : null
 }

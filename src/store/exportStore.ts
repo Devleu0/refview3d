@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { defaultExportName, exportImage, type ExportFormat } from '../export/exportImage'
+import { t } from '../i18n'
 import { useModelStore } from './modelStore'
 import { useToastStore } from './toastStore'
 import { useViewerStore } from './viewerStore'
@@ -24,15 +25,16 @@ export const useExportStore = create<ExportState>((set, get) => ({
     const toast = useToastStore.getState()
     if (!viewer || get().busy) return
     if (!model) {
-      toast.show('내보낼 모델이 없습니다. 먼저 모델을 여세요.', 'error')
+      toast.show(t('export.noModel'), 'error')
       return
     }
     set({ busy: true })
     try {
-      const saved = await exportImage(viewer, format, get().scale, defaultExportName(model.name))
-      if (saved) toast.show(`${format.toUpperCase()} 저장 완료`)
+      const name = model.format === 'mannequin' ? t('mannequin.name') : model.name
+      const saved = await exportImage(viewer, format, get().scale, defaultExportName(name))
+      if (saved) toast.show(t('export.saved', { format: format.toUpperCase() }))
     } catch (err) {
-      toast.show(`저장하지 못했습니다: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      toast.show(t('export.failed', { detail: err instanceof Error ? err.message : String(err) }), 'error')
     } finally {
       set({ busy: false })
     }

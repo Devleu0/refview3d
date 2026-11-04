@@ -12,6 +12,7 @@ import {
   type LibraryModel,
   type LibrarySnapshot,
 } from '../library/libraryApi'
+import { translateBackendError } from '../i18n'
 import { thumbnailer } from '../library/thumbnailer'
 import { isTauri } from '../platform/env'
 import { useModelStore } from './modelStore'
@@ -55,7 +56,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     try {
       applySnapshot(await task())
     } catch (err) {
-      useToastStore.getState().show(String(err), 'error')
+      useToastStore.getState().show(translateBackendError(err), 'error')
     }
   }
 

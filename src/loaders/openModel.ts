@@ -1,4 +1,5 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
+import { t, translateBackendError } from '../i18n'
 import { fileNameOf, MODEL_FORMATS, toModelFormat, unsupportedMessage } from './formats'
 import { loadModel, type LoadedModel } from './loadModel'
 
@@ -8,7 +9,9 @@ export async function openModelFromPath(path: string): Promise<LoadedModel> {
   const format = toModelFormat(name)
   if (!format) throw new Error(unsupportedMessage(name))
   // 모델 폴더를 asset 프로토콜 허용 범위에 추가해야 텍스처·.bin까지 읽을 수 있다.
-  await invoke('allow_model_dir', { path })
+  await invoke('allow_model_dir', { path }).catch((err) => {
+    throw new Error(translateBackendError(err))
+  })
   // convertFileSrc는 경로 전체를 한 덩어리로 인코딩해(Windows의 \ → %5C) 로더가 폴더를 알아내지 못한다.
   // 그러면 외부 .bin·텍스처를 asset 루트에서 찾다 실패하므로, 폴더 URL을 따로 넘긴다.
   const dir = path.slice(0, path.length - name.length)
@@ -36,7 +39,7 @@ export async function pickModelPath(): Promise<string | null> {
   const selected = await open({
     multiple: false,
     directory: false,
-    filters: [{ name: '3D 모델', extensions: [...MODEL_FORMATS] }],
+    filters: [{ name: t('file.dialogFilter'), extensions: [...MODEL_FORMATS] }],
   })
   return typeof selected === 'string' ? selected : null
 }

@@ -4,6 +4,7 @@
 //! - 폴더는 notify로 감시해 파일이 추가·삭제·수정되면 다시 맞추고 `library-changed` 이벤트를 보낸다.
 //! - 썸네일은 프론트엔드가 Three.js로 그려 보내면 앱 데이터 폴더의 thumbs/<id>.png로 저장한다.
 //!   파일 수정 시각(modified)과 썸네일을 만든 시각(thumb_modified)이 다르면 다시 만들어야 한다.
+//! - 사용자에게 보이는 오류는 코드(`code` 또는 `code:detail`)로 돌려주고 화면에서 번역한다.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -290,20 +291,20 @@ pub fn library_list(library: State<'_, Library>) -> CmdResult<Snapshot> {
 pub fn library_add_folder(app: AppHandle, library: State<'_, Library>, path: String) -> CmdResult<Snapshot> {
     let root = PathBuf::from(&path);
     if !root.is_dir() {
-        return Err("폴더를 찾을 수 없습니다".into());
+        return Err("folderNotFound".into());
     }
     // 겹치는 폴더를 둘 다 등록하면 같은 파일이 두 번 잡히므로 막는다.
     let new_key = normalized(&path);
     for (_, existing) in library.folders()? {
         let key = normalized(&existing);
         if key == new_key {
-            return Err("이미 등록된 폴더입니다".into());
+            return Err("folderAlreadyAdded".into());
         }
         if new_key.starts_with(&format!("{key}\\")) || new_key.starts_with(&format!("{key}/")) {
-            return Err(format!("이미 등록된 폴더 안에 있습니다: {existing}"));
+            return Err(format!("folderInsideRegistered:{existing}"));
         }
         if key.starts_with(&format!("{new_key}\\")) || key.starts_with(&format!("{new_key}/")) {
-            return Err(format!("이미 등록된 폴더를 포함합니다: {existing}. 그 폴더를 먼저 빼 주세요."));
+            return Err(format!("folderContainsRegistered:{existing}"));
         }
     }
 
@@ -351,7 +352,7 @@ pub fn library_rescan(library: State<'_, Library>) -> CmdResult<Snapshot> {
 #[tauri::command]
 pub fn library_save_thumbnail(library: State<'_, Library>, request: tauri::ipc::Request<'_>) -> CmdResult<Option<String>> {
     let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
-        return Err("썸네일 데이터가 없습니다".into());
+        return Err("thumbnailMissing".into());
     };
     let header = |name: &str| -> CmdResult<i64> {
         request
@@ -359,12 +360,12 @@ pub fn library_save_thumbnail(library: State<'_, Library>, request: tauri::ipc::
             .get(name)
             .and_then(|v| v.to_str().ok())
             .and_then(|v| v.parse().ok())
-            .ok_or_else(|| format!("{name} 헤더가 없습니다"))
+            .ok_or_else(|| format!("missingHeader:{name}"))
     };
     let id = header("x-model-id")?;
     let modified = header("x-modified")?;
     if !bytes.starts_with(b"\x89PNG") {
-        return Err("PNG가 아닙니다".into());
+        return Err("notPng".into());
     }
     let conn = library.conn.lock().unwrap();
     let updated = conn

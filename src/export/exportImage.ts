@@ -1,4 +1,5 @@
 import type { Layer } from 'ag-psd'
+import { t, type MessageKey } from '../i18n'
 import { isTauri } from '../platform/env'
 import { useGuideStore } from '../store/guideStore'
 import { computeGuides, drawGuides } from '../viewer/perspective'
@@ -7,11 +8,11 @@ import type { ExportLayer, SceneManager } from '../viewer/SceneManager'
 export type ExportFormat = 'png' | 'psd'
 
 /** PSD 레이어 이름. 배열 순서가 아래→위 순서다. */
-const PSD_LAYERS: { layer: ExportLayer; name: string }[] = [
-  { layer: 'shading', name: '음영' },
-  { layer: 'shadow', name: '그림자' },
-  { layer: 'hiddenLines', name: '은선' },
-  { layer: 'lines', name: '선화' },
+const PSD_LAYERS: { layer: ExportLayer; name: MessageKey }[] = [
+  { layer: 'shading', name: 'export.layer.shading' },
+  { layer: 'shadow', name: 'export.layer.shadow' },
+  { layer: 'hiddenLines', name: 'export.layer.hiddenLines' },
+  { layer: 'lines', name: 'export.layer.lines' },
 ]
 
 /**
@@ -33,12 +34,12 @@ export async function buildExport(viewer: SceneManager, format: ExportFormat, sc
   const { width, height, canvases } = viewer.renderForExport(scale, ['composite', ...PSD_LAYERS.map((l) => l.layer)])
   const { writePsd } = await import('ag-psd')
   const children: Layer[] = PSD_LAYERS.filter((l) => canvases.has(l.layer)).map((l) => ({
-    name: l.name,
+    name: t(l.name),
     canvas: canvases.get(l.layer),
   }))
   const guides = renderGuideLayer(viewer, width, height)
   // 투시선은 밑그림 잡을 때만 켜 보도록 숨긴 채로 맨 위에 둔다.
-  if (guides) children.push({ name: '투시선', canvas: guides, hidden: true })
+  if (guides) children.push({ name: t('export.layer.guides'), canvas: guides, hidden: true })
   const buffer = writePsd({
     width,
     height,
@@ -71,7 +72,7 @@ function renderGuideLayer(viewer: SceneManager, width: number, height: number) {
 
 function toBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('이미지를 만들지 못했습니다.'))), 'image/png'),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t('export.imageFailed')))), 'image/png'),
   )
 }
 

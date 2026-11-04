@@ -1,23 +1,26 @@
 import { useEffect, useRef } from 'react'
+import { useT, type MessageKey } from '../i18n'
 import { useUiStore } from '../store/uiStore'
 
-const SHORTCUTS: [string, string][] = [
-  ['회전 / 이동 / 줌', '왼쪽 드래그 / 오른쪽 드래그 / 휠'],
-  ['모델 열기', 'Ctrl+O'],
-  ['라이브러리 열기/닫기', 'Ctrl+B'],
-  ['실행 취소 / 다시 실행', 'Ctrl+Z / Ctrl+Y'],
-  ['정면·후면·좌측·우측·상단·3/4', '1 – 6'],
-  ['화면에 맞추기', 'F'],
-  ['음영 전환 (원본→클레이→툰)', 'S'],
-  ['외곽선 / 은선 / 그리드', 'L / H / G'],
-  ['흑백으로 명도 보기', 'B'],
-  ['투시선 (소실점·눈높이선)', 'P'],
-  ['포즈 편집 / 회전↔IK / 선택 해제', 'R / T / Esc'],
-  ['PNG / PSD 저장', 'Ctrl+E / Ctrl+Shift+E'],
-  ['단축키 보기', '?'],
+/** [동작, 키]. 키는 번역 키이거나(마우스 조작) 그대로 보여줄 글자 */
+const SHORTCUTS: [MessageKey, string | MessageKey][] = [
+  ['help.navigate', 'help.navigateKeys'],
+  ['help.open', 'Ctrl+O'],
+  ['help.library', 'Ctrl+B'],
+  ['help.undoRedo', 'Ctrl+Z / Ctrl+Y'],
+  ['help.views', '1 – 6'],
+  ['help.fit', 'F'],
+  ['help.shading', 'S'],
+  ['help.toggles', 'L / H / G'],
+  ['help.grayscale', 'B'],
+  ['help.guides', 'P'],
+  ['help.pose', 'R / T / Esc'],
+  ['help.export', 'Ctrl+E / Ctrl+Shift+E'],
+  ['help.help', '?'],
 ]
 
 export function ShortcutHelp() {
+  const t = useT()
   const open = useUiStore((s) => s.helpOpen)
   const setOpen = useUiStore((s) => s.setHelpOpen)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -37,19 +40,19 @@ export function ShortcutHelp() {
       // 바깥(배경)을 누르면 닫는다.
       onClick={(e) => e.target === e.currentTarget && setOpen(false)}
     >
-      <h2>단축키</h2>
+      <h2>{t('help.title')}</h2>
       <dl className="shortcut-list">
         {SHORTCUTS.map(([action, keys]) => (
           <div key={action}>
-            <dt>{action}</dt>
+            <dt>{t(action)}</dt>
             <dd>
-              <kbd>{keys}</kbd>
+              <kbd>{keys.startsWith('help.') ? t(keys as MessageKey) : keys}</kbd>
             </dd>
           </div>
         ))}
       </dl>
       <button className="wide" onClick={() => setOpen(false)}>
-        닫기
+        {t('common.close')}
       </button>
     </dialog>
   )

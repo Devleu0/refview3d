@@ -1,34 +1,37 @@
 import { useMemo } from 'react'
 import { toggleHiddenLines, toggleOutline } from '../app/actions'
+import { useT } from '../i18n'
 import { createLineRecorder, updateLinesWithHistory, useLineStore } from '../store/lineStore'
 import { Panel } from './Panel'
 import { SliderField } from './SliderField'
 import { useGestureHistory } from './useGestureHistory'
 
 export function LinePanel() {
+  const t = useT()
   const { outline, creases, lineWidth, hiddenLines } = useLineStore((s) => s.settings)
   const update = useLineStore((s) => s.update)
-  const recordWidth = useMemo(() => createLineRecorder('선 굵기'), [])
+  const widthLabel = t('history.lineWidth')
+  const recordWidth = useMemo(() => createLineRecorder(widthLabel), [widthLabel])
   const widthGesture = useGestureHistory(() => useLineStore.getState().settings, recordWidth)
 
   return (
     <>
-      <Panel title="외곽선">
+      <Panel title={t('lines.outlinePanel')}>
         <label className="check">
           <input type="checkbox" checked={outline} onChange={toggleOutline} />
-          외곽선 그리기 <kbd>L</kbd>
+          {t('lines.outline')} <kbd>L</kbd>
         </label>
         <label className="check">
           <input
             type="checkbox"
             checked={creases}
             disabled={!outline}
-            onChange={(e) => updateLinesWithHistory(e.target.checked ? '접힌 모서리 켜기' : '접힌 모서리 끄기', { creases: e.target.checked })}
+            onChange={(e) => updateLinesWithHistory(t(e.target.checked ? 'history.creasesOn' : 'history.creasesOff'), { creases: e.target.checked })}
           />
-          접힌 모서리도 그리기
+          {t('lines.creases')}
         </label>
         <SliderField
-          label="선 굵기"
+          label={t('lines.width')}
           value={lineWidth}
           min={0.5}
           max={5}
@@ -40,12 +43,12 @@ export function LinePanel() {
         />
       </Panel>
 
-      <Panel title="은선">
+      <Panel title={t('lines.hiddenPanel')}>
         <label className="check">
           <input type="checkbox" checked={hiddenLines} onChange={toggleHiddenLines} />
-          가려진 모서리를 점선으로 <kbd>H</kbd>
+          {t('lines.hidden')} <kbd>H</kbd>
         </label>
-        <p className="hint">상자·건물처럼 각진 모델에 알맞습니다. 뼈대가 있는 메시는 제외됩니다.</p>
+        <p className="hint">{t('lines.hiddenHint')}</p>
       </Panel>
     </>
   )

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+import { boneLabel, t } from '../i18n'
 
 /** 회전(FK): 고른 관절을 직접 돌린다. IK: 고른 관절을 끌면 위쪽 관절들이 따라 굽는다. */
 export type PoseMode = 'rotate' | 'ik'
@@ -174,7 +175,7 @@ export class PoseController {
     this.selected = bone
     this.attachGizmo()
     this.callbacks.onSelect(
-      bone ? { name: bone.name || '(이름 없음)', scale: bone.scale.x, hasParent: !!(bone.parent as THREE.Bone | null)?.isBone } : null,
+      bone ? { name: bone.name, scale: bone.scale.x, hasParent: !!(bone.parent as THREE.Bone | null)?.isBone } : null,
     )
     this.callbacks.onChange()
   }
@@ -194,14 +195,14 @@ export class PoseController {
     const before = this.snapshot()
     const after = before.map((v, i) => (i === index ? this.rest[i] : v))
     this.apply(after)
-    this.callbacks.onCommit(`${this.selected!.name} 초기화`, before, after)
+    this.callbacks.onCommit(t('history.boneReset', { name: boneLabel(this.selected!.name) }), before, after)
   }
 
   /** 모든 뼈를 초기 자세로 되돌린다. */
   resetAll() {
     const before = this.snapshot()
     this.apply(this.rest)
-    this.callbacks.onCommit('포즈 초기화', before, this.rest)
+    this.callbacks.onCommit(t('history.poseReset'), before, this.rest)
   }
 
   snapshot(): PoseSnapshot {
@@ -287,8 +288,8 @@ export class PoseController {
     const after = this.snapshot()
     // IK 목표가 손끝에 닿지 못했으면 다음 끌기가 실제 위치에서 시작하게 맞춘다.
     this.syncIkTarget()
-    const name = this.selected.name || '관절'
-    const label = this.mode === 'ik' ? `${name} IK` : `${name} 회전`
+    const name = boneLabel(this.selected.name)
+    const label = t(this.mode === 'ik' ? 'history.boneIk' : 'history.boneRotate', { name })
     this.callbacks.onCommit(label, before, after)
   }
 

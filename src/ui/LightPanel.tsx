@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { SHADING_MODES, setShading } from '../app/actions'
+import { useT, type MessageKey } from '../i18n'
 import {
   createLightRecorder,
   DEFAULT_LIGHT,
@@ -21,21 +22,24 @@ function LightSlider({
   field,
   ...range
 }: {
-  label: string
+  label: MessageKey
   field: keyof LightSettings
   min: number
   max: number
   step?: number
   format?: (v: number) => string
 }) {
+  const t = useT()
+  const text = t(label)
   const value = useLightStore((s) => s.settings[field]) as number
   const update = useLightStore((s) => s.update)
-  const record = useMemo(() => createLightRecorder(label), [label])
+  const record = useMemo(() => createLightRecorder(text), [text])
   const gesture = useGestureHistory(() => useLightStore.getState().settings, record)
-  return <SliderField label={label} value={value} onChange={(v) => update({ [field]: v })} {...range} {...gesture} />
+  return <SliderField label={text} value={value} onChange={(v) => update({ [field]: v })} {...range} {...gesture} />
 }
 
 export function LightPanel() {
+  const t = useT()
   const shading = useLightStore((s) => s.settings.shading)
   const shadows = useLightStore((s) => s.settings.shadows)
   const azimuth = useLightStore((s) => s.settings.keyAzimuth)
@@ -43,48 +47,50 @@ export function LightPanel() {
 
   return (
     <>
-      <Panel title="음영">
-        <div className="button-row" role="group" aria-label="음영 방식">
+      <Panel title={t('light.shadingPanel')}>
+        <div className="button-row" role="group" aria-label={t('toolbar.shadingGroup')}>
           {SHADING_MODES.map((m) => (
-            <button key={m.mode} title={m.title} aria-pressed={shading === m.mode} onClick={() => setShading(m.mode)}>
-              {m.label}
+            <button key={m.mode} title={t(m.title)} aria-pressed={shading === m.mode} onClick={() => setShading(m.mode)}>
+              {t(m.label)}
             </button>
           ))}
         </div>
-        {shading === 'toon' && <LightSlider label="툰 단계" field="toonSteps" min={2} max={5} format={(v) => `${v}단계`} />}
+        {shading === 'toon' && (
+          <LightSlider label="light.toonSteps" field="toonSteps" min={2} max={5} format={(v) => t('light.toonStepsValue', { count: v })} />
+        )}
       </Panel>
 
-      <Panel title="주광원">
-      <div className="button-grid">
-        {LIGHT_PRESETS.map((p) => (
-          <button
-            key={p.label}
-            aria-pressed={azimuth === p.azimuth && elevation === p.elevation}
-            onClick={() => updateLightWithHistory(`조명: ${p.label}`, { keyAzimuth: p.azimuth, keyElevation: p.elevation })}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <Panel title={t('light.keyPanel')}>
+        <div className="button-grid">
+          {LIGHT_PRESETS.map((p) => (
+            <button
+              key={p.label}
+              aria-pressed={azimuth === p.azimuth && elevation === p.elevation}
+              onClick={() => updateLightWithHistory(t('history.lightPreset', { label: t(p.label) }), { keyAzimuth: p.azimuth, keyElevation: p.elevation })}
+            >
+              {t(p.label)}
+            </button>
+          ))}
+        </div>
 
-      <LightSlider label="방향" field="keyAzimuth" min={-180} max={180} format={degrees} />
-      <LightSlider label="높이" field="keyElevation" min={-45} max={90} format={degrees} />
-      <LightSlider label="세기" field="keyIntensity" min={0} max={5} step={0.1} format={decimal} />
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={shadows}
-          onChange={(e) => updateLightWithHistory(e.target.checked ? '그림자 켜기' : '그림자 끄기', { shadows: e.target.checked })}
-        />
-        그림자
-      </label>
+        <LightSlider label="light.direction" field="keyAzimuth" min={-180} max={180} format={degrees} />
+        <LightSlider label="light.height" field="keyElevation" min={-45} max={90} format={degrees} />
+        <LightSlider label="light.intensity" field="keyIntensity" min={0} max={5} step={0.1} format={decimal} />
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={shadows}
+            onChange={(e) => updateLightWithHistory(t(e.target.checked ? 'history.shadowsOn' : 'history.shadowsOff'), { shadows: e.target.checked })}
+          />
+          {t('light.shadows')}
+        </label>
       </Panel>
 
-      <Panel title="보조광 · 환경광">
-        <LightSlider label="보조광 세기" field="fillIntensity" min={0} max={2} step={0.05} format={decimal} />
-        <LightSlider label="환경광 세기" field="ambientIntensity" min={0} max={2} step={0.05} format={decimal} />
-        <button className="wide" onClick={() => updateLightWithHistory('조명 초기화', DEFAULT_LIGHT)}>
-          조명 초기화
+      <Panel title={t('light.fillPanel')}>
+        <LightSlider label="light.fill" field="fillIntensity" min={0} max={2} step={0.05} format={decimal} />
+        <LightSlider label="light.ambient" field="ambientIntensity" min={0} max={2} step={0.05} format={decimal} />
+        <button className="wide" onClick={() => updateLightWithHistory(t('history.lightReset'), DEFAULT_LIGHT)}>
+          {t('light.reset')}
         </button>
       </Panel>
     </>

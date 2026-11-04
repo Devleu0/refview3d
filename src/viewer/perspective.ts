@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { t } from '../i18n'
 
 /**
  * 투시 가이드 계산과 그리기.
@@ -106,7 +107,7 @@ export function drawGuides(ctx: CanvasRenderingContext2D, guides: PerspectiveGui
       ctx.fillStyle = '#f2c94c'
       ctx.font = `${11 * scale}px sans-serif`
       const left = segment[0].x < segment[1].x ? segment[0] : segment[1]
-      ctx.fillText('눈높이', left.x + 6 * scale, left.y - 5 * scale)
+      ctx.fillText(t('perspective.eyeLevel'), left.x + 6 * scale, left.y - 5 * scale)
     }
   }
 

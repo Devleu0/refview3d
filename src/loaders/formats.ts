@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 export const MODEL_FORMATS = ['obj', 'stl', 'fbx', 'gltf', 'glb'] as const
 export type ModelFormat = (typeof MODEL_FORMATS)[number]
 
@@ -21,8 +23,6 @@ export function fileNameOf(path: string) {
 /** 지원하지 않는 형식일 때 보여줄 안내 */
 export function unsupportedMessage(name: string) {
   const ext = getExtension(name)
-  if (ext === 'skp') {
-    return 'SKP는 직접 열 수 없습니다. SketchUp에서 glTF(.glb) 또는 OBJ로 내보낸 뒤 불러와 주세요.'
-  }
-  return `지원하지 않는 형식입니다${ext ? ` (.${ext})` : ''}. ${MODEL_FORMATS.map((f) => f.toUpperCase()).join(', ')} 파일만 열 수 있습니다.`
+  if (ext === 'skp') return t('file.skp')
+  return t('file.unsupported', { ext: ext ? ` (.${ext})` : '', formats: MODEL_FORMATS.map((f) => f.toUpperCase()).join(', ') })
 }
