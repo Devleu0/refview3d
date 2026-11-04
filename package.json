@@ -1,7 +1,15 @@
 {
   "name": "refview3d",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Lightweight 3D reference viewer for illustrators",
+  "license": "MIT",
+  "author": "Devleu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Devleu0/refview3d.git"
+  },
+  "homepage": "https://github.com/Devleu0/refview3d",
   "type": "module",
   "scripts": {
     "dev": "vite",

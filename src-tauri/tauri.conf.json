@@ -33,7 +33,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -42,7 +44,29 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "webviewInstallMode": { "type": "downloadBootstrapper" }
-    }
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "languages": [
+          "English",
+          "Korean",
+          "Japanese",
+          "SimpChinese",
+          "TradChinese",
+          "Spanish",
+          "French",
+          "German"
+        ],
+        "displayLanguageSelector": true,
+        "installMode": "currentUser"
+      }
+    },
+    "publisher": "Devleu",
+    "copyright": "Copyright (c) 2026 Devleu. MIT License.",
+    "category": "GraphicsAndDesign",
+    "shortDescription": "3D reference viewer for illustrators",
+    "longDescription": "Pose a mannequin, set up lighting and perspective, and export transparent PNG or layered PSD references for drawing.",
+    "licenseFile": "../LICENSE"
   }
 }

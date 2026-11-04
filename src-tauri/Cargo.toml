@@ -1,10 +1,10 @@
 [package]
 name = "refview3d"
 version = "0.1.0"
-description = "그림 레퍼런스용 경량 3D 뷰어"
+description = "Lightweight 3D reference viewer for illustrators"
 authors = ["Devleu"]
-license = ""
-repository = ""
+license = "MIT"
+repository = "https://github.com/Devleu0/refview3d"
 edition = "2024"
 rust-version = "1.90"
 

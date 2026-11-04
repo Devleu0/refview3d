@@ -1,143 +1,133 @@
+<div align="center">
+
 # RefView3D
 
-그림 레퍼런스용 경량 3D 뷰어 (Windows 데스크톱).
-블렌더보다 가볍게, 포즈·구도·명암을 잡아 2D 작업 툴(클립스튜디오, 포토샵)로 넘기는 것이 목표입니다.
+**A lightweight 3D reference viewer for illustrators**
 
-## 기술 스택
+Pose a mannequin, set up lighting and perspective, and send clean references to Clip Studio Paint or Photoshop — without opening Blender.
 
-| 영역 | 선택 |
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Devleu0/refview3d/actions/workflows/ci.yml/badge.svg)](https://github.com/Devleu0/refview3d/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Devleu0/refview3d?include_prereleases)](https://github.com/Devleu0/refview3d/releases)
+
+**English** · [한국어](README.ko.md)
+
+![RefView3D screenshot](docs/screenshot.png)
+
+</div>
+
+## Features
+
+- **Open your models** — OBJ, STL, FBX, glTF and GLB, by file dialog or drag and drop.
+- **Library** — add folders and browse every model inside as thumbnails. Folders are watched, so new or changed files show up automatically.
+- **Lighting** — key light with shadows, fill and ambient light, six classic presets (3/4, front, side, rim, top, from below).
+- **Shading** — original materials, plain clay, or toon shading with 2–5 tones.
+- **Line art** — clean outlines (silhouettes, overlaps, creases) and dashed hidden lines.
+- **Value check** — grayscale view plus hue, saturation, brightness and contrast.
+- **Perspective guides** — vanishing-point lines and eye level for the current camera, with automatic 1/2/3-point detection and one-click 1/2/3-point camera presets.
+- **Posing** — a built-in wooden mannequin, or your own rigged FBX/glTF. Rotate joints directly or drag hands and feet with IK. Scale joints for stylized proportions.
+- **Export** — transparent PNG, or a layered PSD (shading, shadow, hidden lines, line art, and a hidden perspective layer) at 1×, 2× or 4× screen size.
+- **Undo everything** — camera, lighting, lines, color and pose changes, with a clickable history list.
+- **8 languages** — English, 한국어, 日本語, 简体中文, 繁體中文, Español, Français, Deutsch.
+
+## Download
+
+Get the latest Windows installer (`RefView3D_x.y.z_x64-setup.exe`) from the [Releases](https://github.com/Devleu0/refview3d/releases) page.
+
+> The installer is not code-signed yet. If Windows SmartScreen warns you, choose **More info → Run anyway**.
+
+Requires Windows 10 or 11 (64-bit). The WebView2 runtime is installed automatically if missing.
+
+## Quick start
+
+1. Click **Start with the mannequin** on the empty screen, or open your own model with **Ctrl+O**.
+2. Pick a lighting preset in the **Light** tab and switch shading with **S** (original → clay → toon).
+3. Press **R** to edit the pose: click a yellow joint, then drag the rings (rotate) or press **T** and drag the arrows (IK).
+4. Press **P** for perspective guides, and use the 1-pt / 2-pt / 3-pt buttons in the **Camera** tab.
+5. Turn on outlines with **L**, then save with **Ctrl+E** (PNG) or **Ctrl+Shift+E** (layered PSD).
+
+## Keyboard shortcuts
+
+| Action | Keys |
 |---|---|
-| 데스크톱 셸 | Tauri 2 (Rust, WebView2) |
-| UI | React + TypeScript + Zustand |
-| 3D | Three.js (WebGL2) |
-| 디렉토리 인덱스 | Rust `notify` + SQLite(`rusqlite`), 썸네일은 Three.js 오프스크린 렌더 |
-| 내보내기 | 투명 PNG, `ag-psd` 레이어 PSD |
+| Orbit / pan / zoom | Left drag / right drag / wheel |
+| Open model | Ctrl+O, or drop a file onto the window |
+| Toggle library | Ctrl+B |
+| Front · back · left · right · top · 3/4 view | 1 – 6 |
+| Fit to screen | F |
+| Cycle shading (original → clay → toon) | S |
+| Outline / hidden lines / grid | L / H / G |
+| Grayscale value check | B |
+| Perspective guides | P |
+| Pose editing / rotate ↔ IK / deselect joint | R / T / Esc |
+| Save PNG / PSD | Ctrl+E / Ctrl+Shift+E |
+| Undo / redo | Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) |
+| Show shortcuts | ? |
 
-## 폴더 구조
+## Supported formats
 
-```
-src/
-  app/       앱 셸, 레이아웃
-  viewer/    Three.js 씬·카메라·렌더 루프
-  loaders/   포맷별 모델 로더
-  export/    PNG/PSD 내보내기
-  library/   라이브러리 API, 썸네일 렌더러
-  store/     Zustand 상태, 히스토리(Undo/Redo)
-  ui/        패널, 툴바 컴포넌트
-src-tauri/   Rust 백엔드 (파일 시스템, 라이브러리 DB·폴더 감시)
-```
+| Format | Notes |
+|---|---|
+| glTF / GLB | Recommended. Materials, textures, skeletons and animations |
+| FBX | Materials, textures and skeletons |
+| OBJ | Geometry (MTL materials are not read; shown in neutral gray) |
+| STL | Geometry, vertex colors |
+| SKP | Not supported directly — export to glTF or OBJ from SketchUp |
 
-## 개발
+Hidden lines skip skinned (rigged) meshes, because their shape changes with the pose.
 
-사전 준비 (Windows): Node.js 20+, Rust stable, WebView2 런타임(Windows 10/11 기본 포함),
-Visual Studio Build Tools의 "C++를 사용한 데스크톱 개발" 워크로드.
+## Where data is stored
+
+The library index and thumbnails live in `%LOCALAPPDATA%\com.devleu.refview3d` (`library.db`, `thumbs/`). Removing a folder from the library never deletes your files.
+
+## Building from source
+
+Prerequisites (Windows): [Node.js](https://nodejs.org/) 20+, [Rust](https://rustup.rs/) stable, and Visual Studio Build Tools with the **Desktop development with C++** workload.
 
 ```bash
 npm install
-npm run tauri dev     # 데스크톱 앱 실행
-npm run dev           # 브라우저에서 UI만 확인
-npm run tauri build   # 설치 파일 빌드
+npm run tauri dev     # run the desktop app
+npm run dev           # UI only, in the browser (no library / native dialogs)
+npm run tauri build   # build the installer into src-tauri/target/release/bundle
 ```
 
-## 지원 포맷
+Lint and type-check with `npm run lint` and `npm run build`.
 
-OBJ, STL, FBX, GLTF, GLB.
-SKP는 SketchUp에서 glTF 또는 OBJ로 내보낸 뒤 불러옵니다.
+### Tech stack
 
-## 조작
-
-| 동작 | 입력 |
+| Area | Choice |
 |---|---|
-| 회전 / 이동 / 줌 | 왼쪽 드래그 / 오른쪽 드래그 / 휠 |
-| 모델 열기 | Ctrl+O, 또는 창에 파일 끌어다 놓기 |
-| 라이브러리 열기/닫기 | Ctrl+B |
-| 정면·후면·좌측·우측·상단·3/4 시점 | 1 – 6 (뷰포트 아래 시점 독) |
-| 화면에 맞추기 | F |
-| 음영 전환 (원본 → 클레이 → 툰) | S |
-| 외곽선 / 은선 / 그리드 | L / H / G |
-| 흑백으로 명도 보기 | B |
-| 투시선 (소실점·눈높이선) | P |
-| 포즈 편집 / 회전↔IK / 관절 선택 해제 | R / T / Esc |
-| PNG / PSD 저장 | Ctrl+E / Ctrl+Shift+E |
-| 실행 취소 / 다시 실행 | Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) |
-| 단축키 보기 | ? |
+| Desktop shell | Tauri 2 (Rust, WebView2) |
+| UI | React, TypeScript, Zustand |
+| 3D | Three.js (WebGL2) |
+| Library index | Rust `notify` + SQLite (`rusqlite`); thumbnails rendered off-screen with Three.js |
+| Export | Transparent PNG, layered PSD via `ag-psd` |
 
-화면 구성: 위쪽 툴바에 자주 쓰는 음영·표시·저장, 오른쪽 패널에 카메라 / 조명 / 선화 / 보정 / 포즈 / 저장 / 기록 탭(☰로 접기).
+### Project structure
 
-히스토리에는 시점 이동, 화각, 시점 프리셋, 조명·음영·선화 변경이 기록됩니다. 모델을 바꾸면 초기화됩니다.
+```
+src/
+  app/       app shell, shared actions, shortcuts
+  viewer/    Three.js scene, camera, lights, line art, posing, perspective
+  loaders/   model loaders and the built-in mannequin
+  library/   library API and thumbnail renderer
+  export/    PNG / PSD export
+  i18n/      translations (locales/*.ts)
+  store/     Zustand state, undo history
+  ui/        toolbar, panels and overlays
+src-tauri/   Rust backend (file access, library database, folder watching)
+```
 
-## 조명
+### Releasing
 
-| 항목 | 내용 |
-|---|---|
-| 음영 | 원본 재질 / 클레이(회색 단색) / 툰(2~5단계) |
-| 조명 프리셋 | 3/4광(왼쪽 위), 정면광, 측광, 역광, 탑라이트, 아래에서 |
-| 주광원 | 방향(방위각), 높이(고도), 세기 — 바닥과 모델에 그림자 |
-| 보조광·환경광 | 주광원 반대편 보조광, 반구 환경광 세기 |
+Bump the version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`, update [CHANGELOG.md](CHANGELOG.md), then push a tag such as `v0.1.0`. The [Release workflow](.github/workflows/release.yml) builds the Windows installer and creates a draft release.
 
-## 라이브러리
+## Contributing
 
-툴바의 [라이브러리] 또는 Ctrl+B로 왼쪽 서랍을 엽니다 (데스크톱 앱 전용).
+Bug reports and pull requests are welcome. Please run `npm run lint` and `npm run build` before opening a PR.
 
-| 항목 | 내용 |
-|---|---|
-| 폴더 추가 | 하위 폴더까지 OBJ·STL·FBX·GLTF·GLB를 모음. 겹치는 폴더는 등록 거부 |
-| 자동 반영 | 폴더 안 파일 추가·삭제·수정을 감시해 목록과 썸네일을 갱신 |
-| 썸네일 | 3/4 시점으로 자동 생성, 원본이 바뀌면 다시 생성. 못 읽는 파일은 "미리보기 없음" |
-| 찾기 | 이름 검색, 폴더별 보기. 카드를 누르면 열림 |
-| 저장 위치 | 앱 데이터 폴더(`%LOCALAPPDATA%\com.devleu.refview3d`)의 `library.db`, `thumbs/` |
+**Translations:** each language is one file in [`src/i18n/locales`](src/i18n/locales). `ko.ts` is the reference — every other file must contain exactly the same keys, which the type checker enforces. To add a language, copy `en.ts`, translate it, and register it in [`src/i18n/index.ts`](src/i18n/index.ts).
 
-폴더를 빼도 원본 파일은 지우지 않습니다.
+## License
 
-## 선화·내보내기
-
-| 항목 | 내용 |
-|---|---|
-| 외곽선 | 실루엣·겹치는 경계, 접힌 모서리(선택), 굵기 0.5~5px |
-| 은선 | 가려진 모서리를 점선으로 (뼈대가 있는 메시는 제외) |
-| PNG | 배경 투명, 그리드 제외, 화면의 1·2·4배 |
-| PSD | 음영 / 그림자 / 은선 / 선화 레이어 + 합성 이미지 |
-
-## 포즈·데포르메
-
-뼈대가 있는 FBX·GLTF·GLB, 또는 앱에 들어 있는 **기본 마네킹**(빈 화면이나 포즈 탭에서 열기)에서 씁니다.
-
-| 항목 | 내용 |
-|---|---|
-| 포즈 편집 | 툴바 [포즈] 또는 R. 관절(노란 점)을 눌러 고름 |
-| 회전 | 고른 관절을 회전 기즈모로 돌림 |
-| IK | 손·발 같은 끝 관절을 끌면 위 관절 2~3개가 따라 굽음(CCD IK). 맨 위 관절은 몸 전체를 옮김 |
-| 데포르메 | 고른 관절의 크기 50~200% — 머리를 키우거나 팔다리를 줄여 캐릭터 비율로 |
-| 초기화 | 관절 하나 / 포즈 전체를 처음 자세로 |
-
-포즈 변경은 히스토리에 남습니다. 관절 점과 기즈모는 PNG/PSD에 들어가지 않습니다.
-
-## 투시 가이드
-
-카메라 탭의 [투시] 또는 툴바 [투시선](P).
-
-| 항목 | 내용 |
-|---|---|
-| 투시선 | 월드 X(빨강)·Y(초록)·Z(파랑) 방향의 소실점에서 퍼지는 선. 화면과 평행한 축은 평행선 |
-| 눈높이선 | 지평선(노란 점선). 수평 방향 소실점은 모두 이 선 위에 있음 |
-| 판정 | 지금 시점이 1·2·3점 투시인지 표시 (아주 먼 소실점은 평행으로 셈) |
-| 시점 프리셋 | 1점 / 2점 / 3점↓(내려다봄) / 3점↑(올려다봄). 대상·거리는 유지하고 가장 가까운 방향으로 회전 |
-| PSD | 투시선이 켜져 있으면 숨긴 `투시선` 레이어로 들어감 |
-
-## 보정·기록
-
-| 항목 | 내용 |
-|---|---|
-| 흑백 | 색을 빼고 명도(밸류)만 보기 — 보정을 반영한 뒤의 명도 |
-| 색 보정 | 색상·채도·명도·대비, 뷰포트와 내보낸 이미지에 똑같이 적용 |
-| 작업 기록 | 기록 탭에서 항목을 누르면 그 시점으로 이동 (최대 100단계) |
-
-## 로드맵
-
-1. [x] 모델 불러오기, 카메라(FOV) 제어
-2. [x] 디렉토리 연결, 썸네일 인덱스
-3. [x] 주광원·보조광, 툰 셰이딩
-4. [x] 선화(외곽선·은선), PNG/PSD 내보내기
-5. [x] 히스토리 패널(목록), 색상·명도·채도 보정
-6. [x] IK 포징, 데포르메
-7. [x] 1·2·3점 투시 가이드
+[MIT](LICENSE) © 2026 Devleu

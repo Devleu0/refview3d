@@ -1,0 +1,39 @@
+name: Release
+
+# v로 시작하는 태그(v0.1.0 등)를 push하면 Windows 설치 파일을 빌드해 초안 릴리스를 만든다.
+# 내용을 확인한 뒤 GitHub에서 직접 "Publish release"를 누른다.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: RefView3D ${{ github.ref_name }}
+          releaseBody: |
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for what's new.
+
+            **Windows:** download `RefView3D_*_x64-setup.exe` and run it. The installer is not code-signed yet, so SmartScreen may warn — choose "More info" → "Run anyway".
+          releaseDraft: true
+          prerelease: false
