@@ -1,6 +1,8 @@
 import { useUiStore, type SideTab } from '../store/uiStore'
+import { AdjustPanel } from './AdjustPanel'
 import { CameraPanel } from './CameraPanel'
 import { ExportPanel } from './ExportPanel'
+import { HistoryPanel } from './HistoryPanel'
 import { LightPanel } from './LightPanel'
 import { LinePanel } from './LinePanel'
 
@@ -8,7 +10,9 @@ const TABS: { tab: SideTab; label: string }[] = [
   { tab: 'camera', label: '카메라' },
   { tab: 'light', label: '조명' },
   { tab: 'lines', label: '선화' },
-  { tab: 'export', label: '내보내기' },
+  { tab: 'adjust', label: '보정' },
+  { tab: 'export', label: '저장' },
+  { tab: 'history', label: '기록' },
 ]
 
 /** 설정을 탭으로 나눠 한 번에 한 묶음만 보여준다. */
@@ -38,7 +42,9 @@ export function SidePanel() {
         {sideTab === 'camera' && <CameraPanel />}
         {sideTab === 'light' && <LightPanel />}
         {sideTab === 'lines' && <LinePanel />}
+        {sideTab === 'adjust' && <AdjustPanel />}
         {sideTab === 'export' && <ExportPanel />}
+        {sideTab === 'history' && <HistoryPanel />}
       </div>
     </aside>
   )

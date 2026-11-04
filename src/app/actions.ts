@@ -1,3 +1,4 @@
+import { updateAdjustWithHistory, useAdjustStore } from '../store/adjustStore'
 import { updateLightWithHistory, useLightStore, type ShadingMode } from '../store/lightStore'
 import { updateLinesWithHistory, useLineStore } from '../store/lineStore'
 import { useViewerStore } from '../store/viewerStore'
@@ -41,6 +42,11 @@ export function toggleOutline() {
 export function toggleHiddenLines() {
   const on = !useLineStore.getState().settings.hiddenLines
   updateLinesWithHistory(on ? '은선 켜기' : '은선 끄기', { hiddenLines: on })
+}
+
+export function toggleGrayscale() {
+  const on = !useAdjustStore.getState().settings.grayscale
+  updateAdjustWithHistory(on ? '흑백 켜기' : '흑백 끄기', { grayscale: on })
 }
 
 export function toggleGrid() {

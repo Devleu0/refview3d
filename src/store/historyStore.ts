@@ -22,6 +22,8 @@ interface HistoryState {
   execute: (command: Command) => void
   undo: () => void
   redo: () => void
+  /** 적용된 작업이 count개가 될 때까지 실행 취소하거나 다시 실행한다. 0이면 처음 상태. */
+  jumpTo: (count: number) => void
   clear: () => void
 }
 
@@ -51,6 +53,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     if (!command) return
     command.redo()
     set({ past: [...past, command], future: rest })
+  },
+  jumpTo: (count) => {
+    const target = Math.max(0, Math.min(count, get().past.length + get().future.length))
+    while (get().past.length > target) get().undo()
+    while (get().past.length < target) get().redo()
   },
   clear: () => set({ past: [], future: [] }),
 }))

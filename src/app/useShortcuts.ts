@@ -2,7 +2,16 @@ import { useEffect } from 'react'
 import { useExportStore } from '../store/exportStore'
 import { useHistoryStore } from '../store/historyStore'
 import { useUiStore } from '../store/uiStore'
-import { applyViewPreset, cycleShading, frameModel, toggleGrid, toggleHiddenLines, toggleOutline, VIEW_PRESETS } from './actions'
+import {
+  applyViewPreset,
+  cycleShading,
+  frameModel,
+  toggleGrayscale,
+  toggleGrid,
+  toggleHiddenLines,
+  toggleOutline,
+  VIEW_PRESETS,
+} from './actions'
 import { openModelDialog } from './openModelDialog'
 
 /** 입력 필드에 포커스가 있을 때는 단축키를 가로채지 않는다. */
@@ -20,6 +29,7 @@ const KEY_ACTIONS: Record<string, () => void> = {
   l: toggleOutline,
   h: toggleHiddenLines,
   g: toggleGrid,
+  b: toggleGrayscale,
   ...Object.fromEntries(VIEW_PRESETS.map((v) => [v.key, () => applyViewPreset(v.preset)])),
 }
 

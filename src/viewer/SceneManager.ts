@@ -259,6 +259,18 @@ export class SceneManager {
   }
 
   /**
+   * 화면 전체 색 보정(CSS filter 문자열, 없으면 'none').
+   * 뷰포트는 캔버스 CSS로 즉시 적용하고, 내보낼 때는 2D 캔버스 filter로 같은 값을 굽는다.
+   * 렌더 패스를 늘리지 않아 GPU 부담이 없다.
+   */
+  setColorFilter(filter: string) {
+    this.colorFilter = filter
+    this.renderer.domElement.style.filter = filter === 'none' ? '' : filter
+  }
+
+  private colorFilter = 'none'
+
+  /**
    * 현재 시점을 화면 크기의 scale배로 렌더해 레이어별 캔버스로 돌려준다. 그리드는 넣지 않는다.
    * 렌더 직후 같은 작업 안에서 복사하므로 preserveDrawingBuffer 없이도 읽을 수 있다.
    * 켜져 있지 않은 레이어(그림자 끔, 외곽선 끔 등)는 결과에서 빠진다.
@@ -288,7 +300,12 @@ export class SceneManager {
       const canvas = document.createElement('canvas')
       canvas.width = width
       canvas.height = height
-      canvas.getContext('2d')?.drawImage(this.renderer.domElement, 0, 0)
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        // 화면에 보이는 색 보정을 그대로 굽는다.
+        ctx.filter = this.colorFilter
+        ctx.drawImage(this.renderer.domElement, 0, 0)
+      }
       canvases.set(layer, canvas)
     }
     const setOverlays = (shadow: boolean, hidden: boolean) => {

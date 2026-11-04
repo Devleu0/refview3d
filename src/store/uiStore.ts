@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SideTab = 'camera' | 'light' | 'lines' | 'export'
+export type SideTab = 'camera' | 'light' | 'lines' | 'adjust' | 'export' | 'history'
 
 interface UiState {
   sideTab: SideTab

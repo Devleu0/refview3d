@@ -1,5 +1,4 @@
-import { create } from 'zustand'
-import { createMergingRecorder, useHistoryStore } from './historyStore'
+import { createSettingsStore } from './settingsStore'
 
 /** 원본 재질 / 회색 클레이 / 단계 음영(툰) */
 export type ShadingMode = 'original' | 'clay' | 'toon'
@@ -41,36 +40,10 @@ export const LIGHT_PRESETS: { label: string; azimuth: number; elevation: number 
   { label: '아래에서', azimuth: 0, elevation: -35 },
 ]
 
-interface LightState {
-  settings: LightSettings
-  /** 일부 값을 바꾼다. 히스토리는 호출하는 쪽에서 기록한다. */
-  update: (partial: Partial<LightSettings>) => void
-  /** 설정을 통째로 적용한다 (Undo/Redo용). */
-  apply: (settings: LightSettings) => void
-}
+const lights = createSettingsStore(DEFAULT_LIGHT)
 
-export const useLightStore = create<LightState>((set) => ({
-  settings: DEFAULT_LIGHT,
-  update: (partial) => set((s) => ({ settings: { ...s.settings, ...partial } })),
-  apply: (settings) => set({ settings }),
-}))
-
-function sameSettings(a: LightSettings, b: LightSettings) {
-  return (Object.keys(a) as (keyof LightSettings)[]).every((k) => a[k] === b[k])
-}
-
-const applySettings = (settings: LightSettings) => useLightStore.getState().apply(settings)
-
+export const useLightStore = lights.useStore
 /** 연달아 바꾼 조명 변경(슬라이더 등)을 한 항목으로 합치는 기록기 */
-export function createLightRecorder(label: string) {
-  return createMergingRecorder(label, applySettings, sameSettings)
-}
-
+export const createLightRecorder = lights.createRecorder
 /** 조명 설정을 바꾸고 한 번의 히스토리 항목으로 기록한다. */
-export function updateLightWithHistory(label: string, partial: Partial<LightSettings>) {
-  const before = useLightStore.getState().settings
-  useLightStore.getState().update(partial)
-  const after = useLightStore.getState().settings
-  if (sameSettings(before, after)) return
-  useHistoryStore.getState().push({ label, undo: () => applySettings(before), redo: () => applySettings(after) })
-}
+export const updateLightWithHistory = lights.updateWithHistory

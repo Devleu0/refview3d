@@ -1,4 +1,5 @@
-import { SHADING_MODES, setShading, toggleGrid, toggleHiddenLines, toggleOutline } from '../app/actions'
+import { SHADING_MODES, setShading, toggleGrayscale, toggleGrid, toggleHiddenLines, toggleOutline } from '../app/actions'
+import { useAdjustStore } from '../store/adjustStore'
 import { useExportStore } from '../store/exportStore'
 import { useLightStore } from '../store/lightStore'
 import { useLineStore } from '../store/lineStore'
@@ -13,6 +14,7 @@ export function Toolbar() {
   const outline = useLineStore((s) => s.settings.outline)
   const hiddenLines = useLineStore((s) => s.settings.hiddenLines)
   const gridVisible = useViewerStore((s) => s.gridVisible)
+  const grayscale = useAdjustStore((s) => s.settings.grayscale)
   const hasModel = useModelStore((s) => s.model !== null)
   const exportBusy = useExportStore((s) => s.busy)
   const runExport = useExportStore((s) => s.run)
@@ -46,6 +48,9 @@ export function Toolbar() {
         </button>
         <button className="toggle" aria-pressed={gridVisible} onClick={toggleGrid} title="바닥 그리드 (G)">
           그리드
+        </button>
+        <button className="toggle" aria-pressed={grayscale} onClick={toggleGrayscale} title="흑백으로 명도만 보기 (B)">
+          흑백
         </button>
       </div>
 

@@ -277,7 +277,7 @@ button.primary kbd {
 .side-panel {
   display: flex;
   flex-direction: column;
-  width: 280px;
+  width: 300px;
   background: var(--panel);
   border-left: 1px solid var(--border);
 }
@@ -350,4 +350,46 @@ button.primary kbd {
 
 .shortcut-list dd {
   margin: 0;
+}
+
+/* 작업 기록 목록 */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-list button {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+}
+
+.history-list button:hover {
+  background: var(--panel-raised);
+}
+
+.history-list button.undone {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+.history-list button[aria-current='step'] {
+  border-color: var(--accent);
+  background: rgb(91 157 255 / 0.12);
+}
+
+.history-index {
+  min-width: 20px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
