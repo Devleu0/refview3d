@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { LightSettings } from '../store/lightStore'
 import type { LineSettings } from '../store/lineStore'
+import { disposeObject } from './dispose'
 import { LightRig } from './LightRig'
 import { LineArt } from './LineArt'
 import { ShadingOverride } from './ShadingOverride'
@@ -412,19 +413,4 @@ export class SceneManager {
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }
-}
-
-function disposeObject(root: THREE.Object3D) {
-  root.traverse((node) => {
-    const mesh = node as THREE.Mesh
-    if (mesh.geometry) mesh.geometry.dispose()
-    const material = mesh.material
-    if (!material) return
-    for (const m of Array.isArray(material) ? material : [material]) {
-      for (const value of Object.values(m)) {
-        if (value instanceof THREE.Texture) value.dispose()
-      }
-      m.dispose()
-    }
-  })
 }

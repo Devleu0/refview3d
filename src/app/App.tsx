@@ -1,5 +1,6 @@
 import { useModelStore } from '../store/modelStore'
 import { EmptyState } from '../ui/EmptyState'
+import { LibraryPanel } from '../ui/LibraryPanel'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import { SidePanel } from '../ui/SidePanel'
 import { StatusBar } from '../ui/StatusBar'
@@ -21,6 +22,7 @@ export default function App() {
     <div className="app">
       <Toolbar />
       <main className="workspace">
+        <LibraryPanel />
         <section className="viewport-slot">
           <Viewport />
           {!hasModel && !loading && <EmptyState />}

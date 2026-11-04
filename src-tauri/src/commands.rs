@@ -3,7 +3,7 @@ use std::path::Path;
 use tauri::{AppHandle, Manager};
 
 /// 프론트엔드가 asset 프로토콜로 읽을 수 있는 확장자.
-const MODEL_EXTENSIONS: &[&str] = &["obj", "stl", "fbx", "gltf", "glb"];
+pub const MODEL_EXTENSIONS: &[&str] = &["obj", "stl", "fbx", "gltf", "glb"];
 
 /// 모델 파일이 있는 폴더를 asset 프로토콜 허용 범위에 추가한다.
 ///

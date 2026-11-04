@@ -52,6 +52,9 @@ export function useShortcuts() {
         } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
           e.preventDefault()
           useHistoryStore.getState().redo()
+        } else if (key === 'b' && !e.shiftKey) {
+          e.preventDefault()
+          useUiStore.getState().toggleLibrary()
         } else if (key === 'e') {
           e.preventDefault()
           void useExportStore.getState().run(e.shiftKey ? 'psd' : 'png')

@@ -21,11 +21,16 @@ export function Toolbar() {
   const scale = useExportStore((s) => s.scale)
   const sideOpen = useUiStore((s) => s.sideOpen)
   const toggleSide = useUiStore((s) => s.toggleSide)
+  const libraryOpen = useUiStore((s) => s.libraryOpen)
+  const toggleLibrary = useUiStore((s) => s.toggleLibrary)
   const setHelpOpen = useUiStore((s) => s.setHelpOpen)
 
   return (
     <header className="toolbar">
       <span className="brand">RefView3D</span>
+      <button className="toggle" aria-pressed={libraryOpen} onClick={toggleLibrary} title="라이브러리 (Ctrl+B)">
+        라이브러리
+      </button>
       <OpenModelButton />
       <HistoryButtons />
 

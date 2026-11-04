@@ -4,6 +4,7 @@ import { useUiStore } from '../store/uiStore'
 const SHORTCUTS: [string, string][] = [
   ['회전 / 이동 / 줌', '왼쪽 드래그 / 오른쪽 드래그 / 휠'],
   ['모델 열기', 'Ctrl+O'],
+  ['라이브러리 열기/닫기', 'Ctrl+B'],
   ['실행 취소 / 다시 실행', 'Ctrl+Z / Ctrl+Y'],
   ['정면·후면·좌측·우측·상단·3/4', '1 – 6'],
   ['화면에 맞추기', 'F'],
