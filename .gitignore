@@ -27,5 +27,7 @@ dist-ssr
 src-tauri/target
 src-tauri/gen/schemas
 
-# 로컬 도구 설정
+# 로컬 
 .claude/
+public/Model
+RefView3D-builds
